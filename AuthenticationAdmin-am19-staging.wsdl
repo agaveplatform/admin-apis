@@ -1358,13 +1358,13 @@
 </wsdl:binding>
 <wsdl:service name="AuthenticationAdmin">
 <wsdl:port name="AuthenticationAdminHttpsSoap11Endpoint" binding="ns:AuthenticationAdminSoap11Binding">
-<soap:address location="https://dev.tenants.staging.agaveapi.co:8243/services/AuthenticationAdmin.AuthenticationAdminHttpsSoap11Endpoint"/>
+<soap:address location="https://dev.tenants.staging.agaveapi.co:9443/services/AuthenticationAdmin.AuthenticationAdminHttpsSoap11Endpoint"/>
 </wsdl:port>
 <wsdl:port name="AuthenticationAdminHttpsSoap12Endpoint" binding="ns:AuthenticationAdminSoap12Binding">
-<soap12:address location="https://dev.tenants.staging.agaveapi.co:8243/services/AuthenticationAdmin.AuthenticationAdminHttpsSoap12Endpoint"/>
+<soap12:address location="https://dev.tenants.staging.agaveapi.co:9443/services/AuthenticationAdmin.AuthenticationAdminHttpsSoap12Endpoint"/>
 </wsdl:port>
 <wsdl:port name="AuthenticationAdminHttpsEndpoint" binding="ns:AuthenticationAdminHttpBinding">
-<http:address location="https://dev.tenants.staging.agaveapi.co:8243/services/AuthenticationAdmin.AuthenticationAdminHttpsEndpoint"/>
+<http:address location="https://dev.tenants.staging.agaveapi.co:9443/services/AuthenticationAdmin.AuthenticationAdminHttpsEndpoint"/>
 </wsdl:port>
 </wsdl:service>
 </wsdl:definitions>
