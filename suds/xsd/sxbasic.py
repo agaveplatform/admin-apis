@@ -27,7 +27,7 @@ from suds.xsd.query import *
 from suds.sax import splitPrefix, Namespace
 from suds.transport import TransportError
 from suds.reader import DocumentReader
-from urlparse import urljoin
+from urllib.parse import urljoin
 
 
 log = getLogger(__name__)

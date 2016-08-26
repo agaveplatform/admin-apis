@@ -20,7 +20,7 @@ with the suds lib.  Also, contains classes for accessing
 these documents.
 """
 
-from StringIO import StringIO
+from io import StringIO
 from logging import getLogger
 
 log = getLogger(__name__)

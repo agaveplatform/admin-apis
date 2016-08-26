@@ -31,7 +31,7 @@ from suds.xsd.schema import Schema, SchemaCollection
 from suds.xsd.query import ElementQuery
 from suds.sudsobject import Object, Facade, Metadata
 from suds.reader import DocumentReader, DefinitionsReader
-from urlparse import urljoin
+from urllib.parse import urljoin
 import re, soaparray
 
 log = getLogger(__name__)
@@ -232,7 +232,7 @@ class Definitions(WObject):
         for p in service.ports:
             binding = p.binding
             ptype = p.binding.type
-            operations = p.binding.type.operations.values()
+            operations = list(p.binding.type.operations.values())
             for name in [op.name for op in operations]:
                 m = Facade('Method')
                 m.name = name
@@ -249,8 +249,8 @@ class Definitions(WObject):
                 
     def set_wrapped(self):
         """ set (wrapped|bare) flag on messages """
-        for b in self.bindings.values():
-            for op in b.operations.values():
+        for b in list(self.bindings.values()):
+            for op in list(b.operations.values()):
                 for body in (op.soap.input.body, op.soap.output.body):
                     body.wrapped = False
                     if len(body.parts) != 1:
@@ -484,7 +484,7 @@ class PortType(NamedObject):
         @param definitions: A definitions object.
         @type definitions: L{Definitions}
         """
-        for op in self.operations.values():
+        for op in list(self.operations.values()):
             if op.input is None:
                 op.input = Message(Element('no-input'), definitions)
             else:
@@ -656,7 +656,7 @@ class Binding(NamedObject):
         @type definitions: L{Definitions}
         """
         self.resolveport(definitions)
-        for op in self.operations.values():
+        for op in list(self.operations.values()):
             self.resolvesoapbody(definitions, op)
             self.resolveheaders(definitions, op)
             self.resolvefaults(definitions, op)
@@ -855,7 +855,7 @@ class Service(NamedObject):
         @type names: [str,..]
         """
         for p in self.ports:
-            for m in p.methods.values():
+            for m in list(p.methods.values()):
                 if names is None or m.name in names:
                     m.location = url
         

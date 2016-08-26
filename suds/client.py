@@ -20,16 +20,16 @@ See I{README.txt}
 """
 
 import suds
-import suds.metrics as metrics
-from cookielib import CookieJar
+from . import metrics
+from http.cookiejar import CookieJar
 from suds import *
 from suds.reader import DefinitionsReader
 from suds.transport import TransportError, Request
 from suds.transport.https import HttpAuthenticated
 from suds.servicedefinition import ServiceDefinition
 from suds import sudsobject
-from sudsobject import Factory as InstFactory
-from sudsobject import Object
+from .sudsobject import Factory as InstFactory
+from .sudsobject import Object
 from suds.resolver import PathResolver
 from suds.builder import Builder
 from suds.wsdl import Definitions
@@ -38,7 +38,7 @@ from suds.sax.document import Document
 from suds.sax.parser import Parser
 from suds.options import Options
 from suds.properties import Unskin
-from urlparse import urlparse
+from urllib.parse import urlparse
 from copy import deepcopy
 from suds.plugin import PluginContainer
 from logging import getLogger
@@ -188,7 +188,7 @@ class Client(object):
         return clone
  
     def __str__(self):
-        return unicode(self)
+        return str(self)
         
     def __unicode__(self):
         s = ['\n']
@@ -197,7 +197,7 @@ class Client(object):
         s.append('  version: %s' % suds.__version__)
         s.append(' %s  build: %s' % (build[0], build[1]))
         for sd in self.sd:
-            s.append('\n\n%s' % unicode(sd))
+            s.append('\n\n%s' % str(sd))
         return ''.join(s)
 
 
@@ -664,7 +664,7 @@ class SoapClient:
         @rtype: dict
         """
         action = self.method.soap.action
-        if isinstance(action, unicode):
+        if isinstance(action, str):
             action = action.encode('utf-8')
         stock = { 'Content-Type' : 'text/xml; charset=utf-8', 'SOAPAction': action }
         result = dict(stock, **self.options.headers)
@@ -750,7 +750,7 @@ class SimClient(SoapClient):
     @classmethod
     def simulation(cls, kwargs):
         """ get whether loopback has been specified in the I{kwargs}. """
-        return kwargs.has_key(SimClient.injkey)
+        return SimClient.injkey in kwargs
         
     def invoke(self, args, kwargs):
         """

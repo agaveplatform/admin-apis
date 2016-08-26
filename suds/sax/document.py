@@ -54,7 +54,7 @@ class Document:
             the document root element.
         @type node: (L{Element}|str|None)
         """
-        if isinstance(node, basestring):
+        if isinstance(node, str):
             self.__root = Element(node)
             return
         if isinstance(node, Element):
@@ -175,7 +175,7 @@ class Document:
         return ''.join(s)
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return str(self).encode('utf-8')
     
     def __unicode__(self):
         return self.str()

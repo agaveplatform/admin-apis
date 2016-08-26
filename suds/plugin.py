@@ -21,6 +21,7 @@ of suds plugins.
 
 from suds import *
 from logging import getLogger
+import collections
 
 log = getLogger(__name__)
 
@@ -250,7 +251,7 @@ class Method:
         for plugin in self.domain.plugins:
             try:
                 method = getattr(plugin, self.name, None)
-                if method and callable(method):
+                if method and isinstance(method, collections.Callable):
                     method(ctx)
             except Exception as pe:
                 log.exception(pe)
