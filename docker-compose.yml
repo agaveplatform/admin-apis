@@ -1,0 +1,13 @@
+#nginx:
+#    image: agaveapi/admin_nginx
+#    ports:
+#        - "8000:80"
+
+jwt:
+    image: agaveapi/flask_admin_services
+    ports:
+        - "5000:5000"
+    volumes:
+        - ./local-dev.conf:/etc/service.conf
+    environment:
+        package: /services/jwt
