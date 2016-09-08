@@ -11,3 +11,15 @@ jwt:
         - ./local-dev.conf:/etc/service.conf
     environment:
         package: /services/jwt
+
+accounts:
+    image: agaveapi/flask_admin_services
+    ports:
+        - "5001:5000"
+    volumes:
+        - ./local-dev.conf:/etc/service.conf
+    environment:
+        package: /services/accounts
+        wso2admin_username: admin
+        wso2admin_password: a2m1np@ss
+
