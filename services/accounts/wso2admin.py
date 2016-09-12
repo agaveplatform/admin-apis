@@ -37,7 +37,7 @@ class UserAdmin(Wso2Admin):
     def __init__(self):
         username = os.environ.get('wso2admin_username', 'admin')
         password = os.environ.get('wso2admin_password')
-        super(UserAdmin, self).__init__(username, password, 'file:///services/accounts/UserAdmin-am19-staging.wsdl')
+        super(UserAdmin, self).__init__(username, password, 'file:///services/accounts/UserAdmin-am19.wsdl')
 
     def __getattr__(self, key):
         # try:
