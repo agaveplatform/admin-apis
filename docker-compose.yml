@@ -12,14 +12,18 @@ jwt:
     environment:
         package: /services/jwt
 
+# need to export wso2admin_password before starting up the services
 accounts:
     image: agaveapi/flask_admin_services
     ports:
         - "5001:5000"
     volumes:
         - ./local-dev.conf:/etc/service.conf
+    extra_hosts:
+        dev.tenants.sandbox.agaveapi.co: 129.114.6.148
     environment:
         package: /services/accounts
         wso2admin_username: admin
-        wso2admin_password: a2m1np@ss
-
+        wso2admin_password:
+        base_url: dev.tenants.sandbox.agaveapi.co
+        port: 9443
