@@ -40,8 +40,4 @@ class UserAdmin(Wso2Admin):
         super(UserAdmin, self).__init__(username, password, 'file:///services/accounts/UserAdmin-am19.wsdl')
 
     def __getattr__(self, key):
-        # try:
-        #     return getattr(self.client.service, key)
-        # except WebFault as e:
-        #     raise Wso2AdminException(str(e))
         return getattr(self.client.service, key)
