@@ -1,7 +1,7 @@
-#nginx:
-#    image: agaveapi/admin_nginx
-#    ports:
-#        - "8000:80"
+nginx:
+    image: agavaepi/admin_services_nginx
+    ports:
+        - "8000:80"
 
 jwt:
     image: agaveapi/flask_admin_services
