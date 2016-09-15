@@ -4,6 +4,7 @@ from flask_restful import Resource
 from suds import WebFault
 
 from agaveflask.utils import ok, error, RequestParser, APIException
+from agaveflask.errors import DAOError
 
 import models
 from wso2admin import UserAdmin
@@ -43,7 +44,10 @@ class ServiceAccountResource(Resource):
 
     def get(self, account_id):
         """Get details about a service account."""
-        return ok(result=models.account_details(account_id), msg="Service account retrieved successfully.")
+        try:
+            return ok(result=models.account_details(account_id), msg="Service account retrieved successfully.")
+        except DAOError as e:
+            raise APIException(e.msg)
 
     def delete(self, account_id):
         """Delete a service account."""
@@ -64,6 +68,8 @@ class ServiceAccountRolesResource(Resource):
         """List all roles occupied by a service account."""
         try:
             return ok(result=models.account_details(account_id), msg="Roles retrieved successfully.")
+        except DAOError as e:
+            raise APIException(msg=e.msg)
         except WebFault as e:
             admin = UserAdmin()
             return error(msg=admin.error_msg(e))
