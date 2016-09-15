@@ -1,0 +1,9 @@
+# Image:  agaveapi/flask_admin_testsuite
+
+from agaveapi/flask_api
+
+RUN pip3 install pytest
+
+ADD tests /tests
+
+entrypoint ["py.test", "/tests/test_admin_core.py"]
