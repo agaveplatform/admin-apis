@@ -1,6 +1,8 @@
 import os
 
+from agaveflask.errors import DAOError
 from wso2admin import UserAdmin
+
 
 def role_out(role_id):
     """Convert an internal role id to an external role id."""
@@ -55,6 +57,10 @@ def role_details(role_id):
 
 def account_summary(account_id):
     """Return a service account summary object fit for display."""
+    admin = UserAdmin()
+    user = admin.listUsers(filter=account_id, limit=100)
+    if len(user) == 0:
+        raise DAOError(msg='service account does not exist.')
     return {'account_id': account_id,
             '_links': {'owner': 'admin',
                        'self': 'https://{}/admin/service_accounts/{}'.format(os.environ.get('base_url'), account_id),
