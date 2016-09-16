@@ -7,8 +7,8 @@ jwt:
     image: agaveapi/flask_admin_services
     ports:
         - "5000:5000"
-    volumes:
-        - ./local-dev.conf:/etc/service.conf
+#    volumes:
+#        - ./local-dev.conf:/etc/service.conf
     environment:
         package: /services/jwt
 
@@ -17,8 +17,8 @@ accounts:
     image: agaveapi/flask_admin_services
     ports:
         - "5001:5000"
-    volumes:
-        - ./local-dev.conf:/etc/service.conf
+#    volumes:
+#        - ./local-dev.conf:/etc/service.conf
     extra_hosts:
         dev.tenants.sandbox.agaveapi.co: 129.114.6.148
     environment:
