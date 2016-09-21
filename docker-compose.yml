@@ -1,9 +1,14 @@
-nginx:
-    image: agavaepi/admin_services_nginx
+adminnginx:
+    image: agaveapi/admin_services_nginx
+    links:
+        - adminjwt
+        - adminaccounts
     ports:
         - "8000:80"
+    command: /bin/bash -c "env && envsubst < /etc/nginx/sites-enabled/flask-project.template > /etc/nginx/sites-enabled/flask-project && rm -f /etc/nginx/sites-enabled/flask-project.template && nginx -g 'daemon off;'"
 
-jwt:
+
+adminjwt:
     image: agaveapi/flask_admin_services
     ports:
         - "5000:5000"
@@ -13,7 +18,7 @@ jwt:
         package: /services/jwt
 
 # need to export wso2admin_password before starting up the services
-accounts:
+adminaccounts:
     image: agaveapi/flask_admin_services
     ports:
         - "5001:5000"

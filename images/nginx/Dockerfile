@@ -25,6 +25,9 @@ RUN apk --update add openssl-dev pcre-dev zlib-dev wget build-base && \
 
 RUN apk add --update bash && rm -f /var/cache/apk/*
 
+# install envsubst
+RUN apk add --update gettext && rm -f /var/cache/apk/* && cp -v /usr/bin/envsubst /usr/local/bin/
+
 # forward request and error logs to docker log collector
 # RUN ln -sf /dev/stdout /var/log/nginx/access.log
 # RUN ln -sf /dev/stderr /var/log/nginx/error.log
