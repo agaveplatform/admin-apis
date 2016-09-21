@@ -1,19 +1,19 @@
 server {
 
     listen 80;
-    server_name abaco.org;
+    server_name admin.agaveapi.co;
     charset utf-8;
 
     location ~* ^/admin/jwt(.*) {
-        proxy_pass http://${JWT_1_PORT_5000_TCP_ADDR}:5000/admin/jwt$1$is_args$args;
+        proxy_pass http://$ADMINJWT_1_PORT_5000_TCP_ADDR:5000/admin/jwt$1$is_args$args;
     }
 
     location ~/admin/service_accounts(.*) {
-        proxy_pass http://${ACCOUNTS_1_PORT_5000_TCP_ADDR}:5000/admin/service_accounts$1$is_args$args;
+        proxy_pass http://$ADMINACCOUNTS_1_PORT_5000_TCP_ADDR:5000/admin/service_accounts$1$is_args$args;
     }
 
     location ~/admin/service_roles(.*) {
-        proxy_pass http://${ACCOUNTS_1_PORT_5000_TCP_ADDR}:5000/admin/roles$1$is_args$args;
+        proxy_pass http://$ADMINACCOUNTS_1_PORT_5000_TCP_ADDR:5000/admin/roles$1$is_args$args;
     }
 
 }
