@@ -98,12 +98,12 @@ def test_list_test_service_account_roles(headers):
 
 
 def test_basic_list_roles(headers):
-    url = '{}/{}'.format(base_url, '/admin/roles')
+    url = '{}/{}'.format(base_url, '/admin/service_roles')
     rsp = requests.get(url, headers=headers)
     basic_response_checks(rsp)
 
 def test_add_role(headers):
-    url = '{}/{}'.format(base_url, '/admin/roles')
+    url = '{}/{}'.format(base_url, '/admin/service_roles')
     data = {'role_id': 'Internal_admin_test_suite_role'}
     rsp = requests.post(url, data=data, headers=headers)
     result = basic_response_checks(rsp, check_links=True)
@@ -114,7 +114,7 @@ def test_add_role(headers):
     assert result['role_id'] == 'Internal_admin_test_suite_role'
 
 def test_list_roles(headers):
-    url = '{}/{}'.format(base_url, '/admin/roles')
+    url = '{}/{}'.format(base_url, '/admin/service_roles')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     assert 'roles' in result
@@ -127,7 +127,7 @@ def test_list_roles(headers):
     assert len(test_list) == 1
 
 def test_list_role(headers):
-    url = '{}/{}'.format(base_url, '/admin/roles/Internal_admin_test_suite_role')
+    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp, check_links=True)
     assert 'role_id' in result
@@ -136,7 +136,7 @@ def test_list_role(headers):
     assert len(result['accounts']) == 0
 
 def test_list_role_basic_service_accounts(headers):
-    url = '{}/{}'.format(base_url, '/admin/roles/Internal_admin_test_suite_role/service_accounts')
+    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     assert 'role_id' in result
@@ -145,7 +145,7 @@ def test_list_role_basic_service_accounts(headers):
     assert len(result['accounts']) == 0
 
 def test_add_test_service_account_to_role(headers):
-    url = '{}/{}'.format(base_url, '/admin/roles/Internal_admin_test_suite_role/service_accounts')
+    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
     data = {'account_id': 'admin_test_suite_account'}
     rsp = requests.post(url, data=data, headers=headers)
     result = basic_response_checks(rsp, check_links=True)
@@ -156,7 +156,7 @@ def test_add_test_service_account_to_role(headers):
     assert result['accounts'][0] == 'admin_test_suite_account'
 
 def test_list_role_service_accounts(headers):
-    url = '{}/{}'.format(base_url, '/admin/roles/Internal_admin_test_suite_role/service_accounts')
+    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     assert 'role_id' in result
@@ -166,7 +166,7 @@ def test_list_role_service_accounts(headers):
     assert result['accounts'][0] == 'admin_test_suite_account'
 
 def test_list_role_service_account(headers):
-    url = '{}/{}'.format(base_url, '/admin/roles/Internal_admin_test_suite_role/service_accounts/admin_test_suite_account')
+    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts/admin_test_suite_account')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     assert 'account_id' in result
@@ -189,12 +189,12 @@ def test_list_added_service_account_roles(headers):
     assert 'Internal_admin_test_suite_role' in result['roles']
 
 def test_delete_test_service_account_from_role(headers):
-    url = '{}/{}'.format(base_url, '/admin/roles/Internal_admin_test_suite_role/service_accounts/admin_test_suite_account')
+    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts/admin_test_suite_account')
     rsp = requests.delete(url, headers=headers)
     assert rsp.status_code == 204
 
 def test_service_account_removed_roles(headers):
-    url = '{}/{}'.format(base_url, '/admin/roles/Internal_admin_test_suite_role/service_accounts')
+    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp, check_links=True)
     assert 'role_id' in result
@@ -227,7 +227,7 @@ def test_add_role_to_service_account(headers):
     assert 'Internal_admin_test_suite_role' in result['roles']
 
 def test_list_role_service_account_2(headers):
-    url = '{}/{}'.format(base_url, '/admin/roles/Internal_admin_test_suite_role/service_accounts/admin_test_suite_account')
+    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts/admin_test_suite_account')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     assert 'account_id' in result
@@ -255,7 +255,7 @@ def test_delete_role_from_service_account(headers):
     assert rsp.status_code == 204
 
 def test_service_account_removed_roles_2(headers):
-    url = '{}/{}'.format(base_url, '/admin/roles/Internal_admin_test_suite_role/service_accounts')
+    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     assert 'role_id' in result
@@ -275,12 +275,12 @@ def test_service_account_removed_accounts_2(headers):
     assert 'Internal_everyone' in result['roles']
 
 def test_delete_test_role(headers):
-    url = '{}/{}'.format(base_url, '/admin/roles/Internal_admin_test_suite_role')
+    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role')
     rsp = requests.delete(url, headers=headers)
     assert rsp.status_code == 204
 
 def test_role_removed(headers):
-    url = '{}/{}'.format(base_url, '/admin/roles')
+    url = '{}/{}'.format(base_url, '/admin/service_roles')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     assert 'roles' in result
