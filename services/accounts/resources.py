@@ -86,7 +86,7 @@ class ServiceAccountRolesResource(Resource):
         args = self.validate_post()
         admin = UserAdmin()
         try:
-            admin.updateRolesOfUser(userName=account_id, newUserList=args['role_id'].replace('_', '/'))
+            admin.updateRolesOfUser(userName=account_id, newUserList=models.role_in(args['role_id']))
         except WebFault as e:
             return error(msg=admin.error_msg(e))
         except Exception as e:
@@ -108,7 +108,7 @@ class ServiceAccountRoleResource(Resource):
         if models.has_role(account_id, role_id):
             admin = UserAdmin()
             try:
-                admin.addRemoveRolesOfUser(userName=account_id, deletedRoles=role_id.replace('_', '/'))
+                admin.addRemoveRolesOfUser(userName=account_id, deletedRoles=models.role_in(role_id))
             except WebFault as e:
                 return error(msg=admin.error_msg(e))
             except Exception as e:
@@ -223,4 +223,64 @@ class RoleServiceAccountResource(Resource):
                 raise APIException('Uncaught exception: {}'.format(e), 400)
             return ('', 204)
         return error(msg="{} is not occupied by service account {}".format(role_id, account_id))
+
+
+class ClientsResource(Resource):
+    """Manage OAuth clients in the system."""
+
+    def get(self):
+        """List all roles in the system."""
+        return ok(result={'clients': [models.client_summary(c) for c in models.all_clients()]},
+                  msg="Clients retrieved successfully.")
+
+
+class ApisResource(Resource):
+    """Manage APIs in the system."""
+
+    def get(self):
+        """List all APIs in the system."""
+        return ok(result={'accounts': [models.account_summary(a) for a in models.all_accounts()]},
+                  msg="Service accounts retrieved successfully.")
+
+    def validate_post(self):
+        parser = RequestParser()
+        parser.add_argument('account_id', type=str, required=True, help='The id for the service account.')
+        parser.add_argument('password', type=str, required=True, help='The password for the service account.')
+        return parser.parse_args()
+
+    def post(self):
+        """Create a new API."""
+        args = self.validate_post()
+        account_id = args['account_id']
+        admin = UserAdmin()
+        try:
+            admin.addUser(userName=account_id, password=args['password'])
+        except WebFault as e:
+            return error(msg=admin.error_msg(e))
+        except Exception as e:
+            return error(msg='Uncaught exception: {}'.format(e))
+        return ok(result=models.account_details(account_id), msg="Service account created successfully.")
+
+
+class ApiResource(Resource):
+    """Manage a specific API."""
+
+    def get(self, account_id):
+        """Get details about an API."""
+        try:
+            return ok(result=models.account_details(account_id), msg="Service account retrieved successfully.")
+        except DAOError as e:
+            raise APIException(e.msg)
+
+    def delete(self, account_id):
+        """Delete an API."""
+        admin = UserAdmin()
+        try:
+            admin.deleteUser(userName=account_id)
+        except WebFault as e:
+            return error(msg=admin.error_msg(e))
+        except Exception as e:
+            return error(msg='Uncaught exception: {}'.format(e))
+        return ('', 204)
+
 

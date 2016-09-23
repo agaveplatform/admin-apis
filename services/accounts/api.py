@@ -7,7 +7,8 @@ from agaveflask.utils import AgaveApi
 from agaveflask.auth import authn_and_authz
 
 from resources import ServiceAccountsResource, ServiceAccountResource, ServiceAccountRolesResource, \
-    RolesResource, RoleResource, RoleServiceAccountsResource, RoleServiceAccountResource, ServiceAccountRoleResource
+    RolesResource, RoleResource, RoleServiceAccountsResource, RoleServiceAccountResource, ServiceAccountRoleResource, \
+    ClientsResource, ApisResource, ApiResource
 
 import templates
 
@@ -30,6 +31,12 @@ api.add_resource(RolesResource, '/admin/roles')
 api.add_resource(RoleResource, '/admin/roles/<string:role_id>')
 api.add_resource(RoleServiceAccountsResource, '/admin/roles/<string:role_id>/service_accounts')
 api.add_resource(RoleServiceAccountResource, '/admin/roles/<string:role_id>/service_accounts/<string:account_id>')
+
+api.add_resource(ClientsResource, '/admin/clients')
+
+api.add_resource(ApisResource, '/admin/apis')
+api.add_resource(ApiResource, '/admin/apis/<string:api_id>')
+
 
 
 def compile():

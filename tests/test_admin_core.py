@@ -306,3 +306,8 @@ def test_account_removed(headers):
     # check that test account is NOT in list
     test_list = [a for a in result['accounts'] if a['account_id'] == 'admin_test_suite_account']
     assert len(test_list) == 0
+
+def test_list_clients(headers):
+    url = '{}/{}'.format(base_url, '/admin/service_accounts')
+    rsp = requests.get(url, headers=headers)
+    result = basic_response_checks(rsp)

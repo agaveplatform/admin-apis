@@ -16,4 +16,12 @@ server {
         proxy_pass http://$ADMINACCOUNTS_1_PORT_5000_TCP_ADDR:5000/admin/roles$1$is_args$args;
     }
 
+    location ~/admin/clients(.*) {
+        proxy_pass http://$ADMINACCOUNTS_1_PORT_5000_TCP_ADDR:5000/admin/clients$1$is_args$args;
+    }
+
+    location ~/admin/apis(.*) {
+        proxy_pass http://$ADMINACCOUNTS_1_PORT_5000_TCP_ADDR:5000/admin/apis$1$is_args$args;
+    }
+
 }

@@ -1,4 +1,4 @@
-# Image: agavaepi/admin_services_nginx
+# Image: agaveapi/admin_services_nginx
 
 FROM alpine:3.1
 
