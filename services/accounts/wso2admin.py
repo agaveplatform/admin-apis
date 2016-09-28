@@ -55,6 +55,7 @@ class Wso2BasicAuthAdmin(object):
         self.password = password or os.environ.get('wso2admin_password')
         self.userpass = base64.standard_b64encode(str.encode("{}:{}".format(username, password)))
         self.base_url = 'https://{}'.format(os.environ.get('base_url'))
+        self.verify_str = os.environ.get('wso2admin_verify', 'false')
         if self.verify_str.lower() == 'true':
             self.verify = True
         else:
