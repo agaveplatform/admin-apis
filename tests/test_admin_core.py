@@ -64,14 +64,13 @@ def test_list_service_accounts(headers):
     url = '{}/{}'.format(base_url, '/admin/service_accounts')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
-    assert 'accounts' in result
-    assert len(result['accounts']) > 0
-    for a in result['accounts']:
+    assert len(result) > 0
+    for a in result:
         assert '_links' in a
         assert 'account_id' in a
         assert 'password' not in a
     # check that test account is in list
-    test_list = [a for a in result['accounts'] if a['account_id'] == 'admin_test_suite_account']
+    test_list = [a for a in result if a['account_id'] == 'admin_test_suite_account']
     assert len(test_list) == 1
 
 def test_list_test_service_account(headers):
@@ -117,13 +116,12 @@ def test_list_roles(headers):
     url = '{}/{}'.format(base_url, '/admin/service_roles')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
-    assert 'roles' in result
-    assert len(result['roles']) > 0
-    for a in result['roles']:
+    assert len(result) > 0
+    for a in result:
         assert '_links' in a
         assert 'role_id' in a
     # check that test role is in list
-    test_list = [a for a in result['roles'] if a['role_id'] == 'Internal_admin_test_suite_role']
+    test_list = [a for a in result if a['role_id'] == 'Internal_admin_test_suite_role']
     assert len(test_list) == 1
 
 def test_list_role(headers):
@@ -311,3 +309,5 @@ def test_list_clients(headers):
     url = '{}/{}'.format(base_url, '/admin/service_accounts')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
+
+def test_list_apis_api_admin(headers):
