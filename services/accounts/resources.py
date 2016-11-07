@@ -16,7 +16,7 @@ class ServiceAccountsResource(Resource):
 
     def get(self):
         """List all service accounts in the system."""
-        return ok(result={'accounts': [models.account_summary(a) for a in models.all_accounts()]},
+        return ok(result=[models.account_summary(a) for a in models.all_accounts()],
                   msg="Service accounts retrieved successfully.")
 
     def validate_post(self):
@@ -123,7 +123,7 @@ class RolesResource(Resource):
 
     def get(self):
         """List all roles in the system."""
-        return ok(result={'roles': [models.role_summary(r) for r in models.all_roles()]},
+        return ok(result=[models.role_summary(r) for r in models.all_roles()],
                   msg="Roles retrieved successfully.")
 
     def validate_post(self):
@@ -239,8 +239,8 @@ class ApisResource(Resource):
 
     def get(self):
         """List all APIs in the system."""
-        return ok(result={'accounts': [models.account_summary(a) for a in models.all_accounts()]},
-                  msg="Service accounts retrieved successfully.")
+        return ok(result={'apis': [models.api_summary(a) for a in models.all_apis()]},
+                  msg="APIs retrieved successfully.")
 
     def validate_post(self):
         parser = RequestParser()
@@ -248,10 +248,16 @@ class ApisResource(Resource):
         parser.add_argument('password', type=str, required=True, help='The password for the service account.')
         return parser.parse_args()
 
+        parser = RequestParser()
+        # TODO --
+        # 1. ensure content type is JSON
+        # 2. validate the api body using wso2admin.ApiAdmin.audit_api_def()
+        return parser.parse_args()
+
     def post(self):
         """Create a new API."""
         args = self.validate_post()
-        account_id = args['account_id']
+        api_desc = args['body']
         admin = UserAdmin()
         try:
             admin.addUser(userName=account_id, password=args['password'])
@@ -271,6 +277,12 @@ class ApiResource(Resource):
             return ok(result=models.account_details(account_id), msg="Service account retrieved successfully.")
         except DAOError as e:
             raise APIException(e.msg)
+
+    def put(self, api_id):
+        """ Update an api status.
+        :param api_id:
+        :return:
+        """
 
     def delete(self, account_id):
         """Delete an API."""
