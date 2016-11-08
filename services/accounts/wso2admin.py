@@ -27,7 +27,7 @@ class Wso2WSDLAdmin(object):
     def __init__(self, wsdl, username=None, password=None):
         self.username = username or os.environ.get('wso2admin_username', 'admin')
         self.password = password or os.environ.get('wso2admin_password')
-        self.userpass = base64.standard_b64encode(str.encode("{}:{}".format(username, password)))
+        self.userpass = base64.standard_b64encode(str.encode("{}:{}".format(self.username, self.password)))
         self.wsdl = wsdl
         self.client = Client(wsdl)
         self.client.set_options(headers={'Authorization': 'Basic {}'.format(self.userpass.decode('utf-8'))})
@@ -111,10 +111,14 @@ class ApiAdmin(Wso2BasicAuthAdmin):
         """Check an API definition for correctness."""
         if not d.get('api_name'):
             raise DAOError('api_name is required.')
+        if '-' in d.get('api_name'):
+            raise DAOError("api_name cannot have '-' characters in it.")
         if not d.get('context'):
             raise DAOError('context is required.')
         if not d.get('url'):
             raise DAOError('url is required: should be the production URL for the API.')
+        if '-' in d.get('api_version'):
+            raise DAOError("api_version cannot have '-' characters in it.")
         if d.get('visibility'):
             if d.get('visibility').lower() not in ('public', 'restricted'):
                 raise DAOError('visibility, if defined, must be either `public` or `restricted`.')
