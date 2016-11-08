@@ -1,7 +1,7 @@
 import os
 
 from agaveflask.errors import DAOError
-from wso2admin import UserAdmin
+from wso2admin import UserAdmin, ApiAdmin
 
 
 def role_out(role_id):
@@ -31,7 +31,7 @@ def accounts(role_id):
 
 def role_summary(role_id):
     """Return a role object summary fit for display."""
-    return {'role_id': role_out(role_id),
+    return {'roleId': role_out(role_id),
             '_links': {'owner': 'admin',
                        'self': 'https://{}/admin/roles/{}'.format(os.environ.get('base_url'), role_id),
                        'service_accounts':
@@ -61,7 +61,7 @@ def account_summary(account_id):
     user = admin.listUsers(filter=account_id, limit=100)
     if len(user) == 0:
         raise DAOError(msg='service account does not exist.')
-    return {'account_id': account_id,
+    return {'accountId': account_id,
             '_links': {'owner': 'admin',
                        'self': 'https://{}/admin/service_accounts/{}'.format(os.environ.get('base_url'), account_id),
                        'roles':
@@ -104,9 +104,9 @@ def client_summary(role_id):
             name = '_'.join(pieces[2:])
         except KeyError:
             name = ''
-    result = {'client_id': role_id,
-              'client_name': name,
-              'client_owner': owner,
+    result = {'clientId': role_id,
+              'clientName': name,
+              'clientOwner': owner,
               '_links': {'owner': 'https://{}/profiles/v2/{}'.format(os.environ.get('base_url'), owner),
                          'self': 'https://{}/admin/service_roles/{}'.format(os.environ.get('base_url'), role_id),
                        }}
@@ -125,3 +125,53 @@ def all_clients():
     rsp = admin.getAllRolesNames(filter='', limit=100000)
     return [role_out(r.itemName) for r in rsp if r.itemName.startswith('Internal') and r.itemName.endswith('_PRODUCTION')]
 
+
+def break_api_id(api_id):
+    """Return components of the api id from the id itself."""
+    apis = all_apis()
+    for api in apis:
+        candidate = "{}-{}-{}".format(api['name'], api['provider'], api['version'])
+        if candidate == api_id:
+            return api['name'], api['provider'], api['version']
+    else:
+        raise DAOError('Invalid api id -- API does not exist.')
+
+def get_api_id(api):
+    """Return the id of an API from the API description."""
+    return "{}-{}-{}".format(api['name'], api['provider'], api['version'])
+
+def get_api_model(api=None, api_id=None, fields=None):
+    """
+    Generic API model retrieval; Will retrieve the model if `api` object is none and returns fields
+    provided in `fields`. Otherwise, uses the api object passed and derives additional fields as needed.
+    """
+    if not fields:
+        # default to summary fields
+        fields = ['name', 'provider', 'status', 'version']
+    if api:
+        result = api
+    else:
+        admin = ApiAdmin()
+        name, version, provider = break_api_id(api_id)
+        api = admin.get_api(api_name=name, api_version=version, api_provider=provider)
+        if not api:
+            raise DAOError(msg='API does not exist.')
+        result = {key:value for key, value in api.items() if key in fields}
+    result['apiId'] = get_api_id(api)
+    return result.update({'_links': {'owner': api['provider'],
+                                     'self': 'https://{}/admin/apis/{}'.format(os.environ.get('base_url'), result['apiId']),
+                       }})
+
+def api_details(api_id):
+    """Return an API details fit for display."""
+    fields = ['context', 'environments', 'lastUpdated', 'name', 'provider', 'resources', 'status', 'templates', 'version']
+    return get_api_model(api_id=api_id, fields=fields)
+
+def api_summary(api):
+    """Return an API summary fit for display."""
+    return get_api_model(api=api)
+
+def all_apis():
+    """Get all apis in the system."""
+    admin = ApiAdmin()
+    return admin.list_apis()
