@@ -7,7 +7,7 @@ from agaveflask.utils import ok, error, RequestParser, APIException
 from agaveflask.errors import DAOError
 
 import models
-from wso2admin import UserAdmin
+from wso2admin import ApiAdmin, UserAdmin
 
 
 
@@ -21,14 +21,16 @@ class ServiceAccountsResource(Resource):
 
     def validate_post(self):
         parser = RequestParser()
-        parser.add_argument('account_id', type=str, required=True, help='The id for the service account.')
+        parser.add_argument('accountId', type=str, required=True, help='The id for the service account.')
         parser.add_argument('password', type=str, required=True, help='The password for the service account.')
         return parser.parse_args()
 
     def post(self):
         """Create a new service account."""
         args = self.validate_post()
-        account_id = args['account_id']
+        account_id = args['accountId']
+        if '-' in account_id:
+            return error(msg="Invalid account id: no '-' characters are allowed.")
         admin = UserAdmin()
         try:
             admin.addUser(userName=account_id, password=args['password'])
@@ -128,13 +130,13 @@ class RolesResource(Resource):
 
     def validate_post(self):
         parser = RequestParser()
-        parser.add_argument('role_id', type=str, required=True, help='The id of the role to add to the system.')
+        parser.add_argument('roleId', type=str, required=True, help='The id of the role to add to the system.')
         return parser.parse_args()
 
     def post(self):
         """Create a new role."""
         args = self.validate_post()
-        role_id = args['role_id']
+        role_id = args['roleId']
         admin = UserAdmin()
         try:
             admin.addInternalRole(roleName=models.role_in(role_id))
@@ -230,7 +232,7 @@ class ClientsResource(Resource):
 
     def get(self):
         """List all roles in the system."""
-        return ok(result={'clients': [models.client_summary(c) for c in models.all_clients()]},
+        return ok(result=[models.client_summary(c) for c in models.all_clients()],
                   msg="Clients retrieved successfully.")
 
 
@@ -239,56 +241,72 @@ class ApisResource(Resource):
 
     def get(self):
         """List all APIs in the system."""
-        return ok(result={'apis': [models.api_summary(a) for a in models.all_apis()]},
+        return ok(result=[models.api_summary(a) for a in models.all_apis()],
                   msg="APIs retrieved successfully.")
-
-    def validate_post(self):
-        parser = RequestParser()
-        parser.add_argument('account_id', type=str, required=True, help='The id for the service account.')
-        parser.add_argument('password', type=str, required=True, help='The password for the service account.')
-        return parser.parse_args()
-
-        parser = RequestParser()
-        # TODO --
-        # 1. ensure content type is JSON
-        # 2. validate the api body using wso2admin.ApiAdmin.audit_api_def()
-        return parser.parse_args()
 
     def post(self):
         """Create a new API."""
-        args = self.validate_post()
-        api_desc = args['body']
-        admin = UserAdmin()
+        json_data = request.get_json()
+        if not json_data:
+            return error(msg="Content type JSON required for creating APIs.")
+        admin = ApiAdmin()
         try:
-            admin.addUser(userName=account_id, password=args['password'])
-        except WebFault as e:
-            return error(msg=admin.error_msg(e))
-        except Exception as e:
-            return error(msg='Uncaught exception: {}'.format(e))
-        return ok(result=models.account_details(account_id), msg="Service account created successfully.")
+            admin.audit_api_def(json_data)
+        except DAOError as e:
+            return error(msg="Invalid API definition: {}".format(e))
+        try:
+            rsp = admin.add_api(json_data)
+        except DAOError as e:
+            return error(msg='Error trying to add API: {}'.format(e))
+
+        return ok(result=models.api_details(api_id=models.get_api_id(rsp),
+                                            msg="API created successfully."))
 
 
 class ApiResource(Resource):
     """Manage a specific API."""
 
-    def get(self, account_id):
+    def get(self, api_id):
         """Get details about an API."""
         try:
-            return ok(result=models.account_details(account_id), msg="Service account retrieved successfully.")
+            return ok(result=models.api_details(api_id), msg="API retrieved successfully.")
         except DAOError as e:
             raise APIException(e.msg)
+
+    def validate_put(self):
+        parser = RequestParser()
+        parser.add_argument('status', type=str, required=True, help='The status for the API.')
+        return parser.parse_args()
 
     def put(self, api_id):
         """ Update an api status.
         :param api_id:
         :return:
         """
-
-    def delete(self, account_id):
-        """Delete an API."""
-        admin = UserAdmin()
+        # first, find the API
         try:
-            admin.deleteUser(userName=account_id)
+            api = models.get_api_model(api_id)
+        except DAOError:
+            return error(msg="API not found.")
+        args = self.validate_put()
+        status = args['status']
+        API_STATUSES = ('CREATED', 'PUBLISHED', 'RETIRED')
+        if status not in API_STATUSES:
+            return error(msg='Invalid API status: must be one of {}'.format(API_STATUSES))
+        admin = ApiAdmin()
+        try:
+            admin.update_api_status(api_name=api['name'],
+                                    api_version=api['version'],
+                                    api_provider=api['provider'],
+                                    status=status)
+        except DAOError as e:
+            return error(msg="Error updating API status: {}".format(e))
+
+    def delete(self, api_id):
+        """Delete an API."""
+        admin = ApiAdmin()
+        try:
+            admin.delete_api(api_id=api_id)
         except WebFault as e:
             return error(msg=admin.error_msg(e))
         except Exception as e:
