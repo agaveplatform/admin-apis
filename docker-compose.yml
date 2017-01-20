@@ -25,10 +25,10 @@ adminaccounts:
 #    volumes:
 #        - ./local-dev.conf:/etc/service.conf
     extra_hosts:
-        dev.tenants.sandbox.agaveapi.co: 129.114.6.148
+        dev1.tenants.sandbox.agaveapi.co: 129.114.6.51
     environment:
         package: /services/accounts
         wso2admin_username: admin
         wso2admin_password:
-        base_url: dev.tenants.sandbox.agaveapi.co
+        base_url: dev1.tenants.sandbox.agaveapi.co
         port: 9443
