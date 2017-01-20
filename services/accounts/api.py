@@ -1,10 +1,11 @@
 import os
 
-from flask import Flask
+from flask import Flask, abort
 from flask_cors import CORS
 
-from agaveflask.utils import AgaveApi
+from agaveflask.utils import AgaveApi, handle_error
 from agaveflask.auth import authn_and_authz
+from agaveflask.errors import PermissionsError
 
 from resources import ServiceAccountsResource, ServiceAccountResource, ServiceAccountRolesResource, \
     RolesResource, RoleResource, RoleServiceAccountsResource, RoleServiceAccountResource, ServiceAccountRoleResource, \
@@ -20,6 +21,10 @@ api = AgaveApi(app)
 @app.before_request
 def auth():
     authn_and_authz()
+
+@app.errorhandler(Exception)
+def handle_all_errors(e):
+    return handle_error(e)
 
 # Resources
 api.add_resource(ServiceAccountsResource, '/admin/service_accounts')
