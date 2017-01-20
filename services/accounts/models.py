@@ -1,6 +1,9 @@
+import json
 import os
 
-from agaveflask.errors import DAOError
+from suds import WebFault
+
+from agaveflask.errors import DAOError, ResourceError
 from wso2admin import UserAdmin, ApiAdmin
 
 
@@ -21,7 +24,12 @@ def all_roles():
 def all_accounts():
     """Get all account_id's in the system."""
     admin = UserAdmin()
-    return admin.listUsers(filter='', limit=100)
+    try:
+        return admin.listUsers(filter='', limit=100)
+    except WebFault as e:
+        raise ResourceError(msg='error retrieving accounts: {}'.format(admin.error_msg(e)))
+    except Exception as e:
+        raise ResourceError(msg='Uncaught exception: {}'.format(e))
 
 def accounts(role_id):
     """List all service_accounts occupying a role."""
@@ -140,6 +148,29 @@ def get_api_id(api):
     """Return the id of an API from the API description."""
     return "{}-{}-{}".format(api['name'], api['provider'], api['version'])
 
+
+def get_api_templates2(result):
+    try:
+        templates_list = result.pop('templates')
+    except KeyError:
+        result['templates'] = []
+        return result
+    temps = []
+    if templates_list and isinstance(templates_list, list):
+        for t in templates_list:
+            try:
+                d = {'route': t[0],
+                     'methods': t[1],
+                     'roles': t[2],
+                     'tiers' : t[3],
+                     }
+                temps.append(d)
+            # if we don't get a list, or we got a short list just ignore
+            except (TypeError, IndexError, KeyError):
+                pass
+        result['templates'] = temps
+    return result
+
 def get_api_model(api=None, api_id=None, fields=None):
     """
     Generic API model retrieval; Will retrieve the model if `api` object is none and returns fields
@@ -152,15 +183,24 @@ def get_api_model(api=None, api_id=None, fields=None):
         result = api
     else:
         admin = ApiAdmin()
-        name, version, provider = break_api_id(api_id)
-        api = admin.get_api(api_name=name, api_version=version, api_provider=provider)
+        name, provider, version = break_api_id(api_id)
+        api = admin.get_api(api_name=name, api_provider=provider, api_version=version)
         if not api:
             raise DAOError(msg='API does not exist.')
-        result = {key:value for key, value in api.items() if key in fields}
+        result = {key: value for key, value in api.items() if key in fields}
+        if 'resources' in fields:
+            try:
+                result['resources'] = json.loads(api['resources'])
+            except ValueError:
+                # didn't get json
+                pass
+        if 'templates' in fields:
+            result = get_api_templates(result)
     result['apiId'] = get_api_id(api)
-    return result.update({'_links': {'owner': api['provider'],
-                                     'self': 'https://{}/admin/apis/{}'.format(os.environ.get('base_url'), result['apiId']),
+    result.update({'_links': {'owner': api['provider'],
+                              'self': 'https://{}/admin/apis/{}'.format(os.environ.get('base_url'), result['apiId']),
                        }})
+    return result
 
 def api_details(api_id):
     """Return an API details fit for display."""

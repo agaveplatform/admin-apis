@@ -109,16 +109,24 @@ class ApiAdmin(Wso2BasicAuthAdmin):
 
     def audit_api_def(self, d):
         """Check an API definition for correctness."""
-        if not d.get('api_name'):
-            raise DAOError('api_name is required.')
-        if '-' in d.get('api_name'):
-            raise DAOError("api_name cannot have '-' characters in it.")
+        if not d.get('name'):
+            raise DAOError('name is required.')
+        # this test will raise a TypeError on non-iterables passed for the name.
+        try:
+            if '-' in d.get('name'):
+                raise DAOError("name cannot have '-' characters in it.")
+        except TypeError:
+            DAOError('name attribute must be a string.')
         if not d.get('context'):
             raise DAOError('context is required.')
         if not d.get('url'):
             raise DAOError('url is required: should be the production URL for the API.')
-        if '-' in d.get('api_version'):
-            raise DAOError("api_version cannot have '-' characters in it.")
+        try:
+            if '-' in d.get('version'):
+                raise DAOError("version cannot have '-' characters in it.")
+        # this test will raise a TypeError on non-iterables passed for the version.
+        except TypeError:
+            DAOError('version attribute must be a string.')
         if d.get('visibility'):
             if d.get('visibility').lower() not in ('public', 'restricted'):
                 raise DAOError('visibility, if defined, must be either `public` or `restricted`.')
@@ -160,7 +168,21 @@ class ApiAdmin(Wso2BasicAuthAdmin):
 
 
     def add_api(self, d):
-        """Add a new API from description, `d`, which should be a dictionary with the following fields."""
+        """
+        Add a new API from description, `d`, which should be a dictionary.
+        Required fields:
+        name: the name of the API.
+        context: the context of the API, beginning with a leading slash (/) character, not including the version.
+        methods: a list of methods accepted by the API from ('GET', 'POST', 'PUT', 'DELETE', 'HEAD')
+        url: the backend URL of the API, including the protocol (http/https).
+
+        Optional fields:
+        auth: a string or a list of strings representing the auth type from ('oauth', 'none'). If auth is not provided,
+          default is oauth. If a list is provided, the length must match the length of the `methods` list.
+        visibility: a string from ('public', 'restricted'). Default is public. If "restricted", `roles` parm required.
+        roles: a list of roles required to subscribe to the API (requires visibility="restricted").
+
+        """
         self._authn()
         # by default, all apis are assumed to use http
         self.audit_api_def(d)
@@ -173,7 +195,7 @@ class ApiAdmin(Wso2BasicAuthAdmin):
             'endpoint_type': 'http'
         }
         params = {'action': 'addAPI',
-                  'name': d.get('api_name'),
+                  'name': d.get('name'),
                   'context': d.get('context'),
                   'version': d.get('version', API_VERSION),
                   'visibility': d.get('visibility', 'public'),
