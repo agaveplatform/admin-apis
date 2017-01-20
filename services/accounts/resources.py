@@ -237,11 +237,11 @@ class ApisResource(Resource):
         if not rsp.status_code == 200 or rsp.json().get('error'):
             raise ResourceError(msg='Error trying to add API: {}'.format(rsp.content))
         a = {}
-        a['api_name'] = json_data.get('name')
-        a['api_version'] = json_data.get('version') or 'v2'
-        a['api_provider'] = 'admin'
-        return ok(result=models.api_details(models.get_api_id(a),
-                                            msg="API created successfully."))
+        a['name'] = json_data.get('name')
+        a['version'] = json_data.get('version') or 'v2'
+        a['provider'] = 'admin'
+        return ok(result=models.api_details(models.get_api_id(a)),
+                  msg="API created successfully.")
 
 
 class ApiResource(Resource):
@@ -263,9 +263,11 @@ class ApiResource(Resource):
         """
         # first, find the API
         try:
-            api = models.get_api_model(api_id)
+            api = models.get_api_model(api_id=api_id)
         except DAOError:
             raise ResourceError(msg="API not found.")
+        except TypeError as e:
+            raise ResourceError(msg="Problem looking up API: {}.".format(e))
         args = self.validate_put()
         status = args['status']
         API_STATUSES = ('CREATED', 'PUBLISHED', 'RETIRED')
@@ -279,6 +281,9 @@ class ApiResource(Resource):
                                     status=status)
         except DAOError as e:
             raise ResourceError(msg="Error updating API status: {}".format(e))
+        except TypeError as e:
+            raise ResourceError(msg="Problem updating API: {}.".format(e))
+        return ok(result=models.api_details(api_id), msg="API status updated successfully.")
 
     def delete(self, api_id):
         """Delete an API."""

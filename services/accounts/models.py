@@ -149,7 +149,7 @@ def get_api_id(api):
     return "{}-{}-{}".format(api['name'], api['provider'], api['version'])
 
 
-def get_api_templates2(result):
+def get_api_templates(result):
     try:
         templates_list = result.pop('templates')
     except KeyError:
