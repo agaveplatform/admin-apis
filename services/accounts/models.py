@@ -4,16 +4,8 @@ import os
 from suds import WebFault
 
 from agaveflask.errors import DAOError, ResourceError
-from wso2admin import UserAdmin, ApiAdmin
+from wso2admin import UserAdmin, ApiAdmin, role_out, role_in
 
-
-def role_out(role_id):
-    """Convert an internal role id to an external role id."""
-    return role_id.replace('Internal/', 'Internal_')
-
-def role_in(role_id):
-    """Convert an external role id to an internal role id."""
-    return role_id.replace('Internal_', 'Internal/')
 
 def all_roles():
     """Get all role_id's in the system."""
@@ -194,6 +186,9 @@ def get_api_model(api=None, api_id=None, fields=None):
             except ValueError:
                 # didn't get json
                 pass
+        if 'roles' in fields:
+            roles_str = result['roles']
+            result['roles'] = [role_out(r) for r in roles_str.split(',')]
         if 'templates' in fields:
             result = get_api_templates(result)
     result['apiId'] = get_api_id(api)
@@ -204,7 +199,8 @@ def get_api_model(api=None, api_id=None, fields=None):
 
 def api_details(api_id):
     """Return an API details fit for display."""
-    fields = ['context', 'environments', 'lastUpdated', 'name', 'provider', 'resources', 'status', 'templates', 'version']
+    fields = ['context', 'environments', 'lastUpdated', 'name', 'provider', 'resources', 'roles', 'status', 'version',
+              'visibility']
     return get_api_model(api_id=api_id, fields=fields)
 
 def api_summary(api):

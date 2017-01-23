@@ -16,6 +16,17 @@ from agaveflask.errors import DAOError
 
 API_VERSION = 'v2'
 
+
+
+def role_out(role_id):
+    """Convert an internal role id to an external role id."""
+    return role_id.replace('Internal/', 'Internal_')
+
+def role_in(role_id):
+    """Convert an external role id to an internal role id."""
+    return role_id.replace('Internal_', 'Internal/')
+
+
 class Wso2AdminException(Exception):
     def __init__(self, s):
         self.msg = s
@@ -166,26 +177,13 @@ class ApiAdmin(Wso2BasicAuthAdmin):
                     if a.lower() not in ('none', 'oauth'):
                         raise DAOError('{} is not a valid auth value. auth should be in (none, oauth).'.format(a))
 
-
-    def add_api(self, d):
+    def build_wso2_api_desc(self, d):
         """
-        Add a new API from description, `d`, which should be a dictionary.
-        Required fields:
-        name: the name of the API.
-        context: the context of the API, beginning with a leading slash (/) character, not including the version.
-        methods: a list of methods accepted by the API from ('GET', 'POST', 'PUT', 'DELETE', 'HEAD')
-        url: the backend URL of the API, including the protocol (http/https).
-
-        Optional fields:
-        auth: a string or a list of strings representing the auth type from ('oauth', 'none'). If auth is not provided,
-          default is oauth. If a list is provided, the length must match the length of the `methods` list.
-        visibility: a string from ('public', 'restricted'). Default is public. If "restricted", `roles` parm required.
-        roles: a list of roles required to subscribe to the API (requires visibility="restricted").
-
+        Build a WSO2 API definition from a user defined definition, `d`. Assumes the definition `d` has been
+         audited already.
+        :param d:
+        :return:
         """
-        self._authn()
-        # by default, all apis are assumed to use http
-        self.audit_api_def(d)
         endpoint_config = {
             'production_endpoints': {'url': d.get('url'),
                                      'config': ''},
@@ -222,7 +220,8 @@ class ApiAdmin(Wso2BasicAuthAdmin):
         #  add roles to params when visibility is restricted
         if params['visibility'] == 'restricted':
             try:
-                role_str = ','.join(d.get('roles'))
+                # need to convert role identifier
+                role_str = ','.join([role_in(r) for r in d.get('roles')])
             except TypeError:
                 raise DAOError('Invalid roles parameter: roles must be an iterable list of role strings.')
 
@@ -245,10 +244,33 @@ class ApiAdmin(Wso2BasicAuthAdmin):
                     params['resourceMethodAuthType-{}'.format(i)] = 'Application and Application User'
                 else:
                     params['resourceMethodAuthType-{}'.format(i)] = 'None'
+        return params
+
+    def add_api(self, d):
+        """
+        Add a new API from description, `d`, which should be a dictionary.
+        Required fields:
+        name: the name of the API.
+        context: the context of the API, beginning with a leading slash (/) character, not including the version.
+        methods: a list of methods accepted by the API from ('GET', 'POST', 'PUT', 'DELETE', 'HEAD')
+        url: the backend URL of the API, including the protocol (http/https).
+
+        Optional fields:
+        auth: a string or a list of strings representing the auth type from ('oauth', 'none'). If auth is not provided,
+          default is oauth. If a list is provided, the length must match the length of the `methods` list.
+        visibility: a string from ('public', 'restricted'). Default is public. If "restricted", `roles` parm required.
+        roles: a list of roles required to subscribe to the API (requires visibility="restricted").
+
+        """
+        self._authn()
+        # by default, all apis are assumed to use http
+        self.audit_api_def(d)
+        params = self.build_wso2_api_desc(d)
         try:
             rsp = requests.post(self.add_url, cookies=self.cookies, params=params, verify=self.verify)
         except Exception as e:
             raise DAOError('There was an error trying to add the API. Details: {}'.format(e))
+
         return rsp
 
     def update_api_status(self, api_name, status='PUBLISHED', api_version='v2', api_provider='admin'):

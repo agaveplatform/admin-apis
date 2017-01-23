@@ -317,5 +317,81 @@ def test_list_apis(headers):
     url = '{}/{}'.format(base_url, '/admin/apis')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
+    for api in result:
+        assert 'apiId' in api
+        assert 'name' in api
+        assert 'provider' in api
+        assert 'status' in api
+        assert 'version' in api
+
+def check_basic_api_response(result, expected_status='CREATED'):
+    assert 'apiId' in result
+    assert result['apiId'] == 'httpbin_admin_test_suite-admin-v0.1'
+    assert 'context' in result
+    assert result['context'] == '/httpbin_admin_test_suite/v0.1'
+    assert 'name' in result
+    assert result['name'] == 'httpbin_admin_test_suite'
+    assert 'environments' in result
+    assert result['environments'] == 'Production and Sandbox'
+    assert 'provider' in result
+    assert result['provider'] == 'admin'
+    assert 'version' in result
+    assert result['version'] == 'v0.1'
+    assert 'status' in result
+    assert result['status'] == expected_status
+    assert 'visibility' in result
+    assert result['visibility'] == 'public'
+    assert 'roles' in result
+    assert result['roles'] == ['']
+
+
+def test_add_basic_api(headers):
+    url = '{}/{}'.format(base_url, '/admin/apis')
+    data = json.load(open('/tests/httpbin_basic.json'))
+    data['name'] = 'httpbin_admin_test_suite'
+    data['context'] = '/httpbin_admin_test_suite'
+    headers['Content-Type'] = 'application/json'
+    rsp = requests.post(url, data=json.dumps(data), headers=headers)
+    result = basic_response_checks(rsp, check_links=True)
+    check_basic_api_response(result)
+
+def test_list_added_basic_api(headers):
+    url = '{}/{}'.format(base_url, '/admin/apis/httpbin_admin_test_suite-admin-v0.1')
+    rsp = requests.get(url, headers=headers)
+    result = basic_response_checks(rsp, check_links=True)
+    check_basic_api_response(result)
+
+def test_update_basic_status_published(headers):
+    url = '{}/{}'.format(base_url, '/admin/apis/httpbin_admin_test_suite-admin-v0.1')
+    data = {'status': 'PUBLISHED'}
+    headers['Content-Type'] = 'application/json'
+    rsp = requests.put(url, data=json.dumps(data), headers=headers)
+    result = basic_response_checks(rsp, check_links=True)
+    check_basic_api_response(result, expected_status='PUBLISHED')
+
+def test_add_api_restricted_by_roles(headers):
+    url = '{}/{}'.format(base_url, '/admin/apis')
+    data = json.load(open('/tests/httpbin_restricted_by_role.json'))
+    data['name'] = 'httpbin_restricted_admin_test_suite'
+    data['context'] = '/httpbin_restricted_admin_test_suite'
+    headers['Content-Type'] = 'application/json'
+    rsp = requests.post(url, data=json.dumps(data), headers=headers)
+    result = basic_response_checks(rsp, check_links=True)
+    assert 'visibility' in result
+    assert result['visibility'] == 'restricted'
+    assert 'roles' in result
+    assert result['roles'] == ['Internal_dev_sandbox-services-admin']
+
+def test_delete_basic_api(headers):
+    url = '{}/{}'.format(base_url, '/admin/apis/httpbin_admin_test_suite-admin-v0.1')
+    rsp = requests.delete(url, headers=headers)
+    assert rsp.status_code == 204
+
+def test_delete_restricted_api(headers):
+    url = '{}/{}'.format(base_url, '/admin/apis/httpbin_restricted_admin_test_suite-admin-v0.1')
+    rsp = requests.delete(url, headers=headers)
+    assert rsp.status_code == 204
+
+
 
 

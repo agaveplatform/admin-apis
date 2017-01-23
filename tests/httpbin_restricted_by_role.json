@@ -1,0 +1,10 @@
+{
+  "name": "httpbin_restricted",
+  "version": "v0.1",
+  "context": "/httpbin_restricted",
+  "url": "https://httpbin.org",
+  "visibility": "restricted",
+  "roles": ["Internal_dev_sandbox-services-admin"],
+  "methods": ["GET", "POST", "PUT", "DELETE", "HEAD"],
+  "auth": "oauth"
+}
