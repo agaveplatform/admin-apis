@@ -1,0 +1,10 @@
+{
+  "name": "AdminServices",
+  "version": "v2",
+  "context": "/admin",
+  "url": "http://adminnginx/admin",
+  "visibility": "restricted",
+  "roles": ["Internal_dev_sandbox-services-admin"],
+  "methods": ["GET", "POST", "PUT", "DELETE", "HEAD"],
+  "auth": "oauth"
+}
