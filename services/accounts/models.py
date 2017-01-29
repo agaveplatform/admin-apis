@@ -1,7 +1,9 @@
 import json
 import os
+import pytz
 
 from suds import WebFault
+from datetime import datetime
 
 from agaveflask.errors import DAOError, ResourceError
 from wso2admin import UserAdmin, ApiAdmin, role_out, role_in
@@ -31,11 +33,14 @@ def accounts(role_id):
 
 def role_summary(role_id):
     """Return a role object summary fit for display."""
-    return {'roleId': role_out(role_id),
-            '_links': {'owner': 'admin',
-                       'self': 'https://{}/admin/roles/{}'.format(os.environ.get('base_url'), role_id),
-                       'service_accounts':
-                           'https://{}/admin/roles/{}/service_accounts'.format(os.environ.get('base_url'), role_id)}}
+    return {'id': role_out(role_id),
+            'owner': 'admin',
+            '_links': {'self': {
+                            'href': 'https://{}/admin/roles/{}'.format(os.environ.get('base_url'), role_id)},
+                       'service_accounts': {
+                            'href': 'https://{}/admin/roles/{}/service_accounts'.format(os.environ.get('base_url'), role_id)},
+                       'profile': {
+                            'href': 'https://{}/profiles/v2/{}'.format(os.environ.get('base_url'), 'admin')}}}
 
 def roles(account_id):
     """Get all roles occupied by `account_id`."""
@@ -61,11 +66,14 @@ def account_summary(account_id):
     user = admin.listUsers(filter=account_id, limit=100)
     if len(user) == 0:
         raise DAOError(msg='service account does not exist.')
-    return {'accountId': account_id,
-            '_links': {'owner': 'admin',
-                       'self': 'https://{}/admin/service_accounts/{}'.format(os.environ.get('base_url'), account_id),
-                       'roles':
-                           'https://{}/admin/service_accounts/{}/roles'.format(os.environ.get('base_url'), account_id)}}
+    return {'id': account_id,
+            'owner': 'admin',
+            '_links': {'self': {
+                            'href': 'https://{}/admin/service_accounts/{}'.format(os.environ.get('base_url'), account_id)},
+                       'roles': {
+                            'href': 'https://{}/admin/service_accounts/{}/roles'.format(os.environ.get('base_url'), account_id)},
+                       'profile': {
+                            'href': 'https://{}/profiles/v2/{}'.format(os.environ.get('base_url'), 'admin')}}}
 
 def account_details(account_id):
     """Return a detailed account object fit for display."""
@@ -104,18 +112,22 @@ def client_summary(role_id):
             name = '_'.join(pieces[2:])
         except KeyError:
             name = ''
-    result = {'clientId': role_id,
-              'clientName': name,
-              'clientOwner': owner,
-              '_links': {'owner': 'https://{}/profiles/v2/{}'.format(os.environ.get('base_url'), owner),
-                         'self': 'https://{}/admin/service_roles/{}'.format(os.environ.get('base_url'), role_id),
-                       }}
+    result = {'id': role_id,
+              'name': name,
+              'owner': owner,
+              '_links': {'self': {
+                            'href': 'https://{}/admin/service_roles/{}'.format(os.environ.get('base_url'), role_id)},
+                         'profile': {
+                            'href': 'https://{}/profiles/v2/{}'.format(os.environ.get('base_url'), owner)}}}
+
     # service accounts dont have a profile
     if is_service_owner:
         if owner == 'admin':
-            result['_links']['owner'] = 'admin'
+            result['owner'] = 'admin'
+            result['_links']['profile']['href'] = 'https://{}/admin/service_accounts/{}'.format(os.environ.get('base_url'), 'admin')
         else:
-            result['_links']['owner'] = 'https://{}/admin/service_accounts/{}'.format(os.environ.get('base_url'), owner)
+            result['owner'] = owner
+            result['_links']['profile']['href'] = 'https://{}/admin/service_accounts/{}'.format(os.environ.get('base_url'), owner)
     return result
 
 
@@ -170,9 +182,10 @@ def get_api_model(api=None, api_id=None, fields=None):
     """
     if not fields:
         # default to summary fields
-        fields = ['name', 'provider', 'status', 'version']
+        fields = ['id', 'name', 'owner', 'status', 'version']
     if api:
         result = api
+        result['owner'] = result['provider']
     else:
         admin = ApiAdmin()
         name, provider, version = break_api_id(api_id)
@@ -191,15 +204,24 @@ def get_api_model(api=None, api_id=None, fields=None):
             result['roles'] = [role_out(r) for r in roles_str.split(',')]
         if 'templates' in fields:
             result = get_api_templates(result)
-    result['apiId'] = get_api_id(api)
-    result.update({'_links': {'owner': api['provider'],
-                              'self': 'https://{}/admin/apis/{}'.format(os.environ.get('base_url'), result['apiId']),
-                       }})
+        if 'owner' in fields:
+            result['owner'] = result['provider']
+        if 'lastUpdated' in fields:
+            tz = pytz.timezone('America/Chicago')
+            result['lastUpdated'] = datetime.fromtimestamp(result['lastUpdated'], tz).isoformat()
+
+    result.pop('provider', None)
+    result['id'] = get_api_id(api)
+    result.update({'_links': {'self': {
+                                    'href': 'https://{}/admin/apis/{}'.format(os.environ.get('base_url'), result['apiId'])},
+                              'profile': {
+                                    'href': 'https://{}/profiles/v2/{}'.format(os.environ.get('base_url'), result['owner'])}}}
+
     return result
 
 def api_details(api_id):
     """Return an API details fit for display."""
-    fields = ['context', 'environments', 'lastUpdated', 'name', 'provider', 'resources', 'roles', 'status', 'version',
+    fields = ['context', 'environments', 'lastUpdated', 'name', 'owner', 'resources', 'roles', 'status', 'version',
               'visibility']
     return get_api_model(api_id=api_id, fields=fields)
 

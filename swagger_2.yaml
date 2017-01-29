@@ -1,476 +1,525 @@
-# Initial APIs making up the Agave Tenant Admin Services.
-# as a demonstration of an API spec in YAML
+---
 swagger: '2.0'
 info:
   title: Agave Tenant Admin Sevices
-  description: tenant administration and management of configurable aspects of the platform.
-  version: "v2"
-# the domain of the service
-host: public.agaveapi.co
-# array of all schemes that your API supports
+  description: tenant administration and management of configurable aspects of the
+    platform.
+  version: v2
+  license:
+    name: BSD 2-Clause
+    url: https://opensource.org/licenses/BSD-2-Clause
+host: dev.tenants.staging.agaveapi.co
+securityDefinitions:
+  auth:
+    type: oauth2
+    flow: implicit
+    authorizationUrl: https://dev.tenants.staging.agaveapi.co/authorize
+    scopes:
+      PRODUCTION: Catchall scope for all admin services
 schemes:
-  - https
-# will be prefixed to all paths
-basePath: /admin/v2
+- https
+basePath: "/admin/v2"
 produces:
-  - application/json
+- application/json
+consumes:
+- application/json
 paths:
-  /service_accounts:
+  "/service_accounts":
     get:
       summary: Service Accounts
-      description: |
-        The Service Accounts defined in the tenant. A service account is very much like a normal user account in that it has an associated password and can: generate OAuth clients, use the password grant to obtain access tokens, use access tokens to consume APIs, occupy service roles 
+      description: "The Service Accounts defined in the tenant. A service account is very much like a normal user account in that it has an associated password and can: generate OAuth clients, use the password grant to obtain access tokens, use access tokens to consume APIs, occupy service roles \n"
       tags:
-        - service_accounts
+      - service_accounts
       responses:
-        200:
+        '200':
           description: An array of service accounts.
           schema:
             type: array
             items:
-              $ref: '#/definitions/ServiceAccount'
+              "$ref": "#/definitions/ServiceAccount"
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
     post:
       summary: Create a service account.
-      description: |
-        Create a new service account.
+      description: 'Create a new service account.'
       tags:
-        - service_accounts
+      - service_accounts
       parameters:
-        - name: body
-          in: body
-          required: true
-          description: The description of the account to create.
-          x-is-map: false
-          schema:
-              $ref: '#/definitions/ServiceAccount'
+      - name: body
+        in: body
+        required: true
+        description: The description of the account to create.
+        x-is-map: false
+        schema:
+          "$ref": "#/definitions/ServiceAccount"
       responses:
-        200:
+        '200':
           description: The service account created.
           schema:
             type: object
             items:
-              $ref: '#/definitions/ServiceAccount'
+              "$ref": "#/definitions/ServiceAccount"
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'
-  /service_accounts/{accountId}:
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
+  "/service_accounts/{accountId}":
     get:
       summary: Retrieve details about a service account.
-      description: |
-        Details about a service account defined in the tenant. A service account is very much like a normal user account in that it has an associated password and can: generate OAuth clients, use the password grant to obtain access tokens, use access tokens to consume APIs, occupy service roles 
+      description: "Details about a service account defined in the tenant. A service account is very much like a normal user account in that it has an associated password and can: generate OAuth clients, use the password grant to obtain access tokens, use access tokens to consume APIs, occupy service roles \n"
       tags:
-        - service_accounts
+      - service_accounts
       parameters:
-        - name: accountId
-          in: path
-          required: true
-          type: string
-          description: the id of the service account.
+      - name: accountId
+        in: path
+        required: true
+        type: string
+        description: the id of the service account.
       responses:
-        200:
+        '200':
           description: A service account.
           schema:
             type: object
             items:
-              $ref: '#/definitions/ServiceAccount'
+              "$ref": "#/definitions/ServiceAccount"
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'  
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
     delete:
       summary: Delete a service account.
-      description: |
-        Delete a service account.
+      description: 'Delete a service account.'
       tags:
-        - service_accounts
+      - service_accounts
       parameters:
-        - name: accountId
-          in: path
-          required: true
-          type: string
-          description: the id of the service account to delete.
+      - name: accountId
+        in: path
+        required: true
+        type: string
+        description: the id of the service account to delete.
       responses:
-        204:
+        '204':
           description: No content.
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'  
-  /service_accounts/{accountId}/roles:
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
+  "/service_accounts/{accountId}/roles":
     get:
       summary: Retrieve roles occupied by about a service account.
-      description: |
-        Retrieve roles occupied by about a service account. 
+      description: "Retrieve roles occupied by about a service account. \n"
       tags:
-        - service_accounts
-        - service_roles
+      - service_accounts
+      - service_roles
       parameters:
-        - name: accountId
-          in: path
-          required: true
-          type: string
-          description: the id of the service account.
+      - name: accountId
+        in: path
+        required: true
+        type: string
+        description: the id of the service account.
       responses:
-        200:
+        '200':
           description: An array of service roles.
           schema:
             type: array
             items:
-              $ref: '#/definitions/ServiceRole'
+              "$ref": "#/definitions/ServiceRole"
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'  
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
     post:
       summary: Add a role to the list of roles occupied by about a service account.
-      description: |
-        Add a role to the list of roles occupied by about a service account.
+      description: 'Add a role to the list of roles occupied by about a service account.'
       tags:
-        - service_accounts
-        - service_roles
+      - service_accounts
+      - service_roles
       parameters:
-        - name: accountId
-          in: path
-          required: true
-          type: string
-          description: the id of the service account.
-        - name: body
-          in: body
-          required: true
-          description: The role to add.
-          x-is-map: false
-          schema:
-              $ref: '#/definitions/ServiceRole'
+      - name: accountId
+        in: path
+        required: true
+        type: string
+        description: the id of the service account.
+      - name: body
+        in: body
+        required: true
+        description: The role to add.
+        x-is-map: false
+        schema:
+          "$ref": "#/definitions/ServiceRole"
       responses:
-        200:
+        '200':
           description: The updated service account.
           schema:
             type: object
             items:
-              $ref: '#/definitions/ServiceAccount'
+              "$ref": "#/definitions/ServiceAccount"
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'  
-  /service_accounts/{accountId}/roles/{roleId}:
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
+  "/service_accounts/{accountId}/roles/{roleId}":
     delete:
       summary: Remove a role from the list of roles occupied by about a service account.
-      description: |
-        Remove a role from the list of roles occupied by about a service account.
+      description: 'Remove a role from the list of roles occupied by about a service account.'
       tags:
-        - service_accounts
-        - service_roles
+      - service_accounts
+      - service_roles
       parameters:
-        - name: accountId
-          in: path
-          required: true
-          type: string
-          description: the id of the service account.
-        - name: roleId
-          in: path
-          required: true
-          type: string
-          description: the id of the service role.
+      - name: accountId
+        in: path
+        required: true
+        type: string
+        description: the id of the service account.
+      - name: roleId
+        in: path
+        required: true
+        type: string
+        description: the id of the service role.
       responses:
-        204:
+        '204':
           description: No content.
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'  
-  /service_roles:
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
+  "/service_roles":
     get:
       summary: Service Roles
-      description: |
-        The Service Roles defined in the tenant. A service role is a logical grouping of accounts (both user accounts and service accounts). Membership in a service role can be used to control access to Agave at the API level. Service role membership is also passed through the JWT (see JWT Overview) to the backend service so it can be used to implement other forms of access control, though it should not be confused with the new RBAC (role based access control) system being developed for the core services. The new RBAC system will provide groupings of arbitrary platform objects such as systems, apps, metadata, etc. not just accounts. 
+      description: "The Service Roles defined in the tenant. A service role is a logical grouping of accounts (both user accounts and service accounts). Membership in a service role can be used to control access to Agave at the API level. Service role membership is also passed through the JWT (see JWT Overview) to the backend service so it can be used to implement other forms of access control, though it should not be confused with the new RBAC (role based access control) system being developed for the core services. The new RBAC system will provide groupings of arbitrary platform objects such as systems, apps, metadata, etc. not just accounts. \n"
       tags:
-        - service_roles
+      - service_roles
       responses:
-        200:
+        '200':
           description: An array of service roles.
           schema:
             type: array
             items:
-              $ref: '#/definitions/ServiceRole'
+              "$ref": "#/definitions/ServiceRole"
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
     post:
       summary: Create a service role.
-      description: |
-        Create a new service role.
+      description: 'Create a new service role.'
       tags:
-        - service_roles
+      - service_roles
       parameters:
-        - name: body
-          in: body
-          required: true
-          description: The description of the role to create.
-          x-is-map: false
-          schema:
-              $ref: '#/definitions/ServiceRole'
+      - name: body
+        in: body
+        required: true
+        description: The description of the role to create.
+        x-is-map: false
+        schema:
+          "$ref": "#/definitions/ServiceRole"
       responses:
-        200:
+        '200':
           description: The service role created.
           schema:
             type: object
             items:
-              $ref: '#/definitions/ServiceRole'
+              "$ref": "#/definitions/ServiceRole"
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'
-  /service_roles/{roleId}:
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
+  "/service_roles/{roleId}":
     get:
       summary: Retrieve details about a service role.
-      description: |
-        Details about a service role defined in the tenant. 
+      description: "Details about a service role defined in the tenant. \n"
       tags:
-        - service_roles
+      - service_roles
       parameters:
-        - name: roleId
-          in: path
-          required: true
-          type: string
-          description: the id of the service role.
+      - name: roleId
+        in: path
+        required: true
+        type: string
+        description: the id of the service role.
       responses:
-        200:
+        '200':
           description: A service role.
           schema:
             type: object
             items:
-              $ref: '#/definitions/ServiceRole'
+              "$ref": "#/definitions/ServiceRole"
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'  
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
     delete:
       summary: Delete a service role.
-      description: |
-        Delete a service role.
+      description: 'Delete a service role.'
       tags:
-        - service_roles
+      - service_roles
       parameters:
-        - name: roleId
-          in: path
-          required: true
-          type: string
-          description: the id of the service role to delete.
+      - name: roleId
+        in: path
+        required: true
+        type: string
+        description: the id of the service role to delete.
       responses:
-        204:
+        '204':
           description: No content.
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'  
-  /service_roles/{roleId}/service_accounts:
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
+  "/service_roles/{roleId}/service_accounts":
     get:
       summary: Retrieve service accounts occupying a service role.
-      description: |
-        Retrieve service accounts occupying a service role. 
+      description: "Retrieve service accounts occupying a service role. \n"
       tags:
-        - service_accounts
-        - service_roles
+      - service_accounts
+      - service_roles
       parameters:
-        - name: roleId
-          in: path
-          required: true
-          type: string
-          description: the id of the service role.
+      - name: roleId
+        in: path
+        required: true
+        type: string
+        description: the id of the service role.
       responses:
-        200:
+        '200':
           description: An array of service roles.
           schema:
             type: array
             items:
-              $ref: '#/definitions/ServiceRole'
+              "$ref": "#/definitions/ServiceRole"
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'  
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
     post:
       summary: Add a service account to the list of accoounts occupying a role.
-      description: |
-        Add a service account to the list of accoounts occupying a role.
+      description: 'Add a service account to the list of accoounts occupying a role.'
       tags:
-        - service_accounts
-        - service_roles
+      - service_accounts
+      - service_roles
       parameters:
-        - name: roleId
-          in: path
-          required: true
-          type: string
-          description: the id of the service role.
-        - name: body
-          in: body
-          required: true
-          description: The account to add.
-          x-is-map: false
-          schema:
-              $ref: '#/definitions/ServiceAccount'
+      - name: roleId
+        in: path
+        required: true
+        type: string
+        description: the id of the service role.
+      - name: body
+        in: body
+        required: true
+        description: The account to add.
+        x-is-map: false
+        schema:
+          "$ref": "#/definitions/ServiceAccount"
       responses:
-        200:
+        '200':
           description: The updated service role.
           schema:
             type: object
             items:
-              $ref: '#/definitions/ServiceRole'
+              "$ref": "#/definitions/ServiceRole"
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'  
-  /service_roles/{roleId}/service_accounts/{accountId}:
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
+  "/service_roles/{roleId}/service_accounts/{accountId}":
     delete:
       summary: Remove an account from the list of accounts occupying a role.
-      description: |
-        Remove an account from the list of accounts occupying a role.
+      description: 'Remove an account from the list of accounts occupying a role.'
       tags:
-        - service_accounts
-        - service_roles
+      - service_accounts
+      - service_roles
       parameters:
-        - name: accountId
-          in: path
-          required: true
-          type: string
-          description: the id of the service account.
-        - name: roleId
-          in: path
-          required: true
-          type: string
-          description: the id of the service role.
+      - name: accountId
+        in: path
+        required: true
+        type: string
+        description: the id of the service account.
+      - name: roleId
+        in: path
+        required: true
+        type: string
+        description: the id of the service role.
       responses:
-        204:
+        '204':
           description: No content.
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'  
-
-  /apis:
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
+  "/apis":
     get:
       summary: Tenant APIs
-      description: |
-        Manage the APIs available for subscription in a tenant. The API abstraction provides a mechanism for exposing external services through the same domain and authentication mechanism as the other Agave services. Defining an API entails providing a mapping between the front end URL (what the client consumes) and the backend service, defining what HTTP methods are available, defining whether the service is authenticated or not, and defining any roles that are required for subscribing to the API. 
+      description: "Manage the APIs available for subscription in a tenant. The API
+        abstraction provides a mechanism for exposing external services through the
+        same domain and authentication mechanism as the other Agave services. Defining
+        an API entails providing a mapping between the front end URL (what the client
+        consumes) and the backend service, defining what HTTP methods are available,
+        defining whether the service is authenticated or not, and defining any roles
+        that are required for subscribing to the API. \n"
       tags:
-        - apis
+      - apis
       responses:
-        200:
+        '200':
           description: An array of APIs.
           schema:
             type: array
             items:
-              $ref: '#/definitions/API'
+              "$ref": "#/definitions/API"
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
     post:
       summary: Create an API.
-      description: |
-        Create a new API.
+      description: 'Create a new API.'
       tags:
-        - apis
+      - apis
       parameters:
-        - name: body
-          in: body
-          required: true
-          description: The description of the API to create.
-          x-is-map: false
-          schema:
-              $ref: '#/definitions/API'
+      - name: body
+        in: body
+        required: true
+        description: The description of the API to create.
+        x-is-map: false
+        schema:
+          "$ref": "#/definitions/API"
       responses:
-        200:
+        '200':
           description: The API created.
           schema:
             type: object
             items:
-              $ref: '#/definitions/API'
+              "$ref": "#/definitions/APIResponse"
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'
-  /apis/{apiId}:
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
+  "/apis/{apiId}":
     get:
       summary: Retrieve details about an API.
-      description: |
-        Retrieve details about an API.
+      description: 'Retrieve details about an API.'
       tags:
-        - apis
+      - apis
       parameters:
-        - name: apiId
-          required: true
-          in: path
-          description: The id of the API.
-          type: string
+      - name: apiId
+        required: true
+        in: path
+        description: The id of the API.
+        type: string
       responses:
-        200:
+        '200':
           description: An API.
           schema:
             type: object
             items:
-              $ref: '#/definitions/API'
+              "$ref": "#/definitions/APIResponse"
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
     put:
       summary: Update API status.
-      description: |
-        Create a new API.
+      description: 'Create a new API.'
       tags:
-        - apis
+      - apis
       parameters:
-        - name: apiId
-          required: true
-          in: path
-          description: The id of the API.
-          type: string
-        - name: body
-          in: body
-          required: true
-          description: The status to update the API to.
-          x-is-map: false
-          schema:
-              $ref: '#/definitions/APIstatus'
+      - name: apiId
+        required: true
+        in: path
+        description: The id of the API.
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The status to update the API to.
+        x-is-map: false
+        schema:
+          "$ref": "#/definitions/APIStatus"
       responses:
-        200:
+        '200':
           description: The API created.
           schema:
             type: object
             items:
-              $ref: '#/definitions/API'
+              "$ref": "#/definitions/APIResponse"
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
     delete:
       summary: Delete an API.
-      description: |
-        Delete an API.
+      description: 'Delete an API.'
       tags:
-        - apis
+      - apis
       parameters:
-        - name: apiId
-          in: path
-          required: true
-          type: string
-          description: the id of the API role to delete.
+      - name: apiId
+        in: path
+        required: true
+        type: string
+        description: the id of the API role to delete.
       responses:
-        204:
+        '204':
           description: No content.
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'  
-
-
-
+            "$ref": "#/definitions/Error"
+      security:
+      - auth:
+        - PRODUCTION
 definitions:
   ServiceAccount:
     type: object
@@ -484,50 +533,188 @@ definitions:
       roles:
         type: array
         items:
-          $ref: '#/definitions/ServiceRole'
+          "$ref": "#/definitions/ServiceRole"
   ServiceRole:
     type: object
     properties:
       roleId:
         type: string
         description: Unique identifier representing the service role.
-  APIstatus:
+  APIStatus:
     type: object
     properties:
       status:
-        type: string
-        description: Status of the API from ('CREATED', 'PUBLISHED', 'RETIRED')
+        "$ref": "#/definitions/APIStatusType"
+  APIStatusType:
+    title: APIStatusType
+    type: string
+    description: Status of the API
+    enum:
+    - CREATED
+    - PUBLISHED
+    - RETIRED
   API:
     type: object
     properties:
       name:
         type: string
-        description: The name of the API; this is part of the unique id for the API and is referenced by users to subscribe to the API using the clients service.
+        default: MyDomainAPI
+        description: The name of the API; this is part of the unique id for the API
+          and is referenced by users to subscribe to the API using the clients service.
+      context:
+        type: string
+        default: "/myDomainAPI"
+        description: the path the API will be exposed under to the client.
+      version:
+        type: string
+        default: v2
+        description: he (platform) version of the API. The current Agave platform
+          version is 'v2'.
+      url:
+        type: string
+        default: https://httpbin.agaveapi.co
+        description: The production URL for the backend service, including the protocol
+          (http or https).
+      visibility:
+        "$ref": "#/definitions/APIVisibility"
+      roles:
+        type: array
+        items:
+          type: string
+        description: "(required when visibility = 'restricted') A list of roles required
+          for subscription to the API."
+      methods:
+        type: array
+        items:
+          type: string
+        description: "The list of allowed HTTP methods from ('GET', 'POST', 'PUT', 'DELETE', 'HEAD')."
+      auth:
+        type: array
+        items:
+          "$ref": "#/definitions/APIAuthType"
+        description: "Authentication type for the API; either a single string or a list of strings from ('none', 'oauth'). If none, then no authentication will be required for the API. Otherwise, an OAuth access token will be required. If a single string is provides, that auth type will be applied to all methods in the API. If a list is provided, the list must be the same length as the methods list and the auth type will be required for subscribing to the API."
+  APIResponse:
+    type: object
+    properties:
+      id:
+        type: string
+        description: The unique id of the API. This is referenced by users to subscribe
+          to the API using the clients service.
+      name:
+        type: string
+        description: The name of the API; this is part of the unique id for the API
+          and is referenced by users to subscribe to the API using the clients service.
       context:
         type: string
         description: the path the API will be exposed under to the client.
       version:
         type: string
-        description: he (platform) version of the API. The current Agave platform version is 'v2'.
+        description: he (platform) version of the API. The current Agave platform
+          version is 'v2'.
       url:
         type: string
-        description: The production URL for the backend service, including the protocol (http or https).
+        description: The production URL for the backend service, including the protocol
+          (http or https).
       visibility:
         type: string
-        description: Must be either 'public' or 'restricted'. If the visibility is set to public, any user will be allowed to subscribe to the API; if set to restricted, the roles parameter (below) must be passed and these roles will be required for subscription to the API.
+        description: Must be either 'public' or 'restricted'. If the visibility is
+          set to public, any user will be allowed to subscribe to the API; if set
+          to restricted, the roles parameter (below) must be passed and these roles
+          will be required for subscription to the API.
       roles:
         type: array
         items:
           type: string
-        description: (required when visibility = 'restricted') A list of roles required for subscription to the API.
+        description: "(required when visibility = 'restricted') A list of roles required
+          for subscription to the API."
+      lastUpdated:
+        description: The date this API was last modified in ISO 8601 format.
+        type: string
+        format: date-time
+      owner:
+        type: string
+        description: The user who registered this API.
       methods:
         type: array
         items:
           type: string
-        description: The list of allowed HTTP methods from ('GET', 'POST', 'PUT', 'DELETE', 'HEAD').
+        description: "The list of allowed HTTP methods from (GET, POST, PUT, DELETE, HEAD)"
+      environment:
+        type: string
+        default: Sandbox and Production
+        description: The deployment environments for which this API is valid. Always
+          set to, 'Production and Sandbox'
+      resources:
+        type: array
+        items:
+          "$ref": "#/definitions/APIResource"
+        description: The description of the resources represented by this API registration.
       auth:
         type: string
-        description: Authentication type for the API; either a single string or a list of strings from ('none', 'oauth'). If none, then no authentication will be required for the API. Otherwise, an OAuth access token will be required. If a single string is provides, that auth type will be applied to all methods in the API. If a list is provided, the list must be the same length as the methods list and the auth type will be required for
+        default: oauth
+        description: Authentication type for the API; either a single string or a
+          list of strings from ('none', 'oauth'). If none, then no authentication
+          will be required for the API. Otherwise, an OAuth access token will be required.
+          If a single string is provides, that auth type will be applied to all methods
+          in the API. If a list is provided, the list must be the same length as the
+          methods list and the auth type will be required for
+  APIResource:
+    type: object
+    properties:
+      http_verbs:
+        "$ref": "#/definitions/APIResourceMethodSummary"
+      url_pattern:
+        type: string
+        default: "/*"
+        description: A regex representing the routes mapped by this API after the api name and version
+  APIResourceMethodSummary:
+    type: object
+    description: The summary object representing the methods and routes registered for this API.
+    properties:
+      DELETE:
+        "$ref": "#/definitions/APIResourceMethod"
+      GET:
+        "$ref": "#/definitions/APIResourceMethod"
+      HEAD:
+        "$ref": "#/definitions/APIResourceMethod"
+      POST:
+        "$ref": "#/definitions/APIResourceMethod"
+      PUT:
+        "$ref": "#/definitions/APIResourceMethod"
+  APIResourceMethod:
+    type: object
+    description: The details of a HTTP method on this API. This field is optional and will be excluded if not explicitly enabled on the API registration.
+    properties:
+      auth_type:
+        "$ref": "#/definitions/APIAuthType"
+      throttling_tier:
+        "$ref": "#/definitions/ClientSubscriptionTier"
+  APIVisibility:
+    title: APIVisibility
+    type: string
+    default: public
+    description: Must be either public or restricted. If the visibility is set to public, any user will be allowed to subscribe to the API; if set to restricted, the roles parameter (below) must be passed and these roles will be required for subscription to the API.
+    enum:
+    - public
+    - restricted
+  ClientSubscriptionTier:
+    title: ClientSubscriptionTier
+    description: The rate limit for the given client on this API
+    type: string
+    default: UNLIMITED
+    enum:
+    - BRONZE
+    - GOLD
+    - SILVER
+    - UNLIMITED
+  APIAuthType:
+    title: APIAuthType
+    type: string
+    description: None or Application and Application User
+    default: oauth
+    enum:
+    - none
+    - oauth
   Error:
     type: object
     properties:
