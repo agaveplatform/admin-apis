@@ -1,5 +1,7 @@
+from datetime import datetime
 import json
 import os
+import pytz
 
 from suds import WebFault
 
@@ -31,11 +33,14 @@ def accounts(role_id):
 
 def role_summary(role_id):
     """Return a role object summary fit for display."""
-    return {'roleId': role_out(role_id),
-            '_links': {'owner': 'admin',
-                       'self': 'https://{}/admin/roles/{}'.format(os.environ.get('base_url'), role_id),
-                       'service_accounts':
-                           'https://{}/admin/roles/{}/service_accounts'.format(os.environ.get('base_url'), role_id)}}
+    return {'id': role_out(role_id),
+            'owner': 'admin',
+            '_links': {'self': {
+                            'href': 'https://{}/admin/roles/{}'.format(os.environ.get('base_url'), role_id)},
+                       'service_accounts': {
+                            'href': 'https://{}/admin/roles/{}/service_accounts'.format(os.environ.get('base_url'), role_id)},
+                       'profile': {
+                            'href': 'https://{}/profiles/v2/{}'.format(os.environ.get('base_url'), 'admin')}}}
 
 def roles(account_id):
     """Get all roles occupied by `account_id`."""
@@ -61,12 +66,14 @@ def account_summary(account_id):
     user = admin.listUsers(filter=account_id, limit=100)
     if len(user) == 0:
         raise DAOError(msg='service account does not exist.')
-    return {'accountId': account_id,
-            '_links': {'owner': 'admin',
-                       'self': 'https://{}/admin/service_accounts/{}'.format(os.environ.get('base_url'), account_id),
-                       'roles':
-                           'https://{}/admin/service_accounts/{}/roles'.format(os.environ.get('base_url'), account_id)}}
-
+    return {'id': account_id,
+            'owner': 'admin',
+            '_links': {'self': {
+                            'href': 'https://{}/admin/service_accounts/{}'.format(os.environ.get('base_url'), account_id)},
+                       'roles': {
+                            'href': 'https://{}/admin/service_accounts/{}/roles'.format(os.environ.get('base_url'), account_id)},
+                       'profile': {
+                            'href': 'https://{}/profiles/v2/{}'.format(os.environ.get('base_url'), 'admin')}}}
 def account_details(account_id):
     """Return a detailed account object fit for display."""
     return dict(account_summary(account_id), **{'roles': roles(account_id)})
@@ -104,13 +111,13 @@ def client_summary(role_id):
             name = '_'.join(pieces[2:])
         except KeyError:
             name = ''
-    result = {'clientId': role_id,
-              'clientName': name,
-              'clientOwner': owner,
-              '_links': {'owner': 'https://{}/profiles/v2/{}'.format(os.environ.get('base_url'), owner),
-                         'self': 'https://{}/admin/service_roles/{}'.format(os.environ.get('base_url'), role_id),
-                       }}
-    # service accounts dont have a profile
+    result = {'id': role_id,
+              'name': name,
+              'owner': owner,
+              '_links': {'self': {
+                            'href': 'https://{}/admin/service_roles/{}'.format(os.environ.get('base_url'), role_id)},
+                         'profile': {
+                            'href': 'https://{}/profiles/v2/{}'.format(os.environ.get('base_url'), owner)}}}    # service accounts dont have a profile
     if is_service_owner:
         if owner == 'admin':
             result['_links']['owner'] = 'admin'
@@ -138,7 +145,12 @@ def break_api_id(api_id):
 
 def get_api_id(api):
     """Return the id of an API from the API description."""
-    return "{}-{}-{}".format(api['name'], api['provider'], api['version'])
+    # it's possible that the `api` object is coming from wso2, in which case it will container
+    # `provider`; but if it is coming from our description it will contain `owner`
+    try:
+        return "{}-{}-{}".format(api['name'], api['provider'], api['version'])
+    except KeyError:
+        return "{}-{}-{}".format(api['name'], api['owner'], api['version'])
 
 
 def get_api_templates(result):
@@ -191,15 +203,25 @@ def get_api_model(api=None, api_id=None, fields=None):
             result['roles'] = [role_out(r) for r in roles_str.split(',')]
         if 'templates' in fields:
             result = get_api_templates(result)
-    result['apiId'] = get_api_id(api)
-    result.update({'_links': {'owner': api['provider'],
-                              'self': 'https://{}/admin/apis/{}'.format(os.environ.get('base_url'), result['apiId']),
+    # change 'provider' to 'owner'
+    if 'provider' in result:
+        result['owner'] = result.pop('provider')
+    # use ISO 180 time strings -- actually, the values being returned by APIM were not valid (mysql) timestamps;
+    # often times the last updated field was actually NULL in the DB but an integer was still being returned.
+    # if 'lastUpdated' in fields:
+    #     tz = pytz.timezone('America/Chicago')
+    # #     --- this is wrong; at the very least, need to cast to int before calling fromtimestamp()
+    #     result['lastUpdated'] = datetime.fromtimestamp(result['lastUpdated'], tz).isoformat()
+
+    result['id'] = get_api_id(api)
+    result.update({'_links': {'owner': result['owner'],
+                              'self': 'https://{}/admin/apis/{}'.format(os.environ.get('base_url'), result['id']),
                        }})
     return result
 
 def api_details(api_id):
     """Return an API details fit for display."""
-    fields = ['context', 'environments', 'lastUpdated', 'name', 'provider', 'resources', 'roles', 'status', 'version',
+    fields = ['context', 'environments', 'name', 'provider', 'resources', 'roles', 'status', 'version',
               'visibility']
     return get_api_model(api_id=api_id, fields=fields)
 

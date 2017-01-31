@@ -277,7 +277,7 @@ class ApiResource(Resource):
         try:
             admin.update_api_status(api_name=api['name'],
                                     api_version=api['version'],
-                                    api_provider=api['provider'],
+                                    api_provider=api['owner'],
                                     status=status)
         except DAOError as e:
             raise ResourceError(msg="Error updating API status: {}".format(e))
