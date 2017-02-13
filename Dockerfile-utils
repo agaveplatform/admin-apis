@@ -1,0 +1,7 @@
+# Image:  agaveapi/flask_admin_utils
+
+from agaveapi/flask_api
+
+ADD utils /utils
+
+entrypoint ["python3", "/utils/reg.py"]
