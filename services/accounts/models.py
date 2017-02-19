@@ -221,7 +221,7 @@ def get_api_model(api=None, api_id=None, fields=None):
 
 def api_details(api_id):
     """Return an API details fit for display."""
-    fields = ['context', 'environments', 'name', 'provider', 'resources', 'roles', 'status', 'version',
+    fields = ['context', 'name', 'provider', 'resources', 'roles', 'status', 'version',
               'visibility']
     return get_api_model(api_id=api_id, fields=fields)
 
