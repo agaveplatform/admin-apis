@@ -1,7 +1,7 @@
 {
   "name": "httpbin_restricted",
   "version": "v0.1",
-  "context": "/httpbin_restricted",
+  "path": "/httpbin_restricted",
   "url": "https://httpbin.org",
   "visibility": "restricted",
   "roles": ["Internal_dev_sandbox-services-admin"],

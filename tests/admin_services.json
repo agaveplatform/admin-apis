@@ -1,7 +1,7 @@
 {
   "name": "AdminServices",
   "version": "v2",
-  "context": "/admin",
+  "path": "/admin",
   "url": "http://adminnginx/admin",
   "visibility": "restricted",
   "roles": ["Internal_dev_sandbox-services-admin"],

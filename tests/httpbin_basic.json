@@ -1,7 +1,7 @@
 {
   "name": "httpbin",
   "version": "v0.1",
-  "context": "/httpbin",
+  "path": "/httpbin",
   "url": "https://httpbin.org",
   "visibility": "public",
   "methods": ["GET", "POST", "PUT", "DELETE", "HEAD"],

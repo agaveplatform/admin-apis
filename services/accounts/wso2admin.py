@@ -128,8 +128,8 @@ class ApiAdmin(Wso2BasicAuthAdmin):
                 raise DAOError("name cannot have '-' characters in it.")
         except TypeError:
             DAOError('name attribute must be a string.')
-        if not d.get('context'):
-            raise DAOError('context is required.')
+        if not d.get('path'):
+            raise DAOError('path is required.')
         if not d.get('url'):
             raise DAOError('url is required: should be the production URL for the API.')
         try:
@@ -194,7 +194,7 @@ class ApiAdmin(Wso2BasicAuthAdmin):
         }
         params = {'action': 'addAPI',
                   'name': d.get('name'),
-                  'context': d.get('context'),
+                  'context': d.get('path'),
                   'version': d.get('version', API_VERSION),
                   'visibility': d.get('visibility', 'public'),
                   'thumbUrl': '',

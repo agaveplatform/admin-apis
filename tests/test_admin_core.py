@@ -351,7 +351,7 @@ def test_add_basic_api(headers):
     url = '{}/{}'.format(base_url, '/admin/apis')
     data = json.load(open('/tests/httpbin_basic.json'))
     data['name'] = 'httpbin_admin_test_suite'
-    data['context'] = '/httpbin_admin_test_suite'
+    data['path'] = '/httpbin_admin_test_suite'
     headers['Content-Type'] = 'application/json'
     rsp = requests.post(url, data=json.dumps(data), headers=headers)
     result = basic_response_checks(rsp, check_links=True)
@@ -375,7 +375,7 @@ def test_add_api_restricted_by_roles(headers):
     url = '{}/{}'.format(base_url, '/admin/apis')
     data = json.load(open('/tests/httpbin_restricted_by_role.json'))
     data['name'] = 'httpbin_restricted_admin_test_suite'
-    data['context'] = '/httpbin_restricted_admin_test_suite'
+    data['path'] = '/httpbin_restricted_admin_test_suite'
     headers['Content-Type'] = 'application/json'
     rsp = requests.post(url, data=json.dumps(data), headers=headers)
     result = basic_response_checks(rsp, check_links=True)
