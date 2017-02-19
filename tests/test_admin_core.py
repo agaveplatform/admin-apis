@@ -345,6 +345,12 @@ def check_basic_api_response(result, expected_status='CREATED'):
     assert result['visibility'] == 'public'
     assert 'roles' in result
     assert result['roles'] == ['']
+    assert 'methods' in result
+    assert 'GET' in result['methods']
+    assert 'POST' in result['methods']
+    assert 'PUT' in result['methods']
+    assert 'DELETE' in result['methods']
+    assert 'HEAD' in result['methods']
 
 
 def test_add_basic_api(headers):

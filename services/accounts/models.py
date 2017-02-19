@@ -195,6 +195,13 @@ def get_api_model(api=None, api_id=None, fields=None):
         if 'resources' in fields:
             try:
                 result['resources'] = json.loads(api['resources'])
+                # try to pull the verbs out of the resources field
+                result['methods'] = []
+                try:
+                    for verb, value in result['resources'][0]['http_verbs'].items():
+                        result['methods'].append(verb)
+                except Exception:
+                    pass
             except ValueError:
                 # didn't get json
                 pass
