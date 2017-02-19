@@ -21,10 +21,14 @@ import requests
 
 base_url = os.environ.get('base_url', 'http://localhost:8000')
 
+print("Using base URL: {}".format(base_url))
 
 @pytest.fixture(scope='session')
 def headers():
-    jwt = os.environ.get('jwt', open('/tests/jwt').read())
+    try:
+        jwt = os.environ.get('jwt', open('/tests/jwt').read())
+    except IOError:
+        jwt = os.environ.get('jwt', open('{}/tests/jwt'.format(os.getcwd())).read())
     if jwt:
         jwt_header = os.environ.get('jwt_header', 'X-Jwt-Assertion-AGAVE-PROD')
         headers = {jwt_header: jwt}
@@ -47,272 +51,272 @@ def basic_response_checks(rsp, check_links=False):
         assert '_links' in result
     return result
 
-
-def test_basic_list_service_accounts(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts')
-    rsp = requests.get(url, headers=headers)
-    basic_response_checks(rsp)
-
-def test_add_service_account(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts')
-    data = {'accountId': 'admin_test_suite_account', 'password': 'abcd123'}
-    rsp = requests.post(url, data=data, headers=headers)
-    result = basic_response_checks(rsp, check_links=True)
-    assert 'roles' in result
-    assert 'id' in result
-    assert 'password' not in result
-    assert len(result['roles']) > 0
-    assert 'Internal_everyone' in result['roles']
-    assert result['id'] == 'admin_test_suite_account'
-
-def test_list_service_accounts(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts')
-    rsp = requests.get(url, headers=headers)
-    result = basic_response_checks(rsp)
-    assert len(result) > 0
-    for a in result:
-        assert '_links' in a
-        assert 'id' in a
-        assert 'password' not in a
-    # check that test account is in list
-    test_list = [a for a in result if a['id'] == 'admin_test_suite_account']
-    assert len(test_list) == 1
-
-def test_list_test_service_account(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account')
-    rsp = requests.get(url, headers=headers)
-    result = basic_response_checks(rsp, check_links=True)
-    assert 'id' in result
-    assert 'roles' in result
-    assert 'password' not in result
-    assert result['id'] == 'admin_test_suite_account'
-    assert len(result['roles']) == 1
-    assert 'Internal_everyone' in result['roles']
-
-def test_list_test_service_account_roles(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles')
-    rsp = requests.get(url, headers=headers)
-    result = basic_response_checks(rsp, check_links=True)
-    assert 'id' in result
-    assert 'roles' in result
-    assert 'password' not in result
-    assert result['id'] == 'admin_test_suite_account'
-    assert len(result['roles']) == 1
-    assert 'Internal_everyone' in result['roles']
-
-
-def test_basic_list_roles(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles')
-    rsp = requests.get(url, headers=headers)
-    basic_response_checks(rsp)
-
-def test_add_role(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles')
-    data = {'roleId': 'Internal_admin_test_suite_role'}
-    rsp = requests.post(url, data=data, headers=headers)
-    result = basic_response_checks(rsp, check_links=True)
-    assert 'accounts' in result
-    assert 'id' in result
-    # roles should initially be unoccupied
-    assert len(result['accounts']) == 0
-    assert result['id'] == 'Internal_admin_test_suite_role'
-
-def test_list_roles(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles')
-    rsp = requests.get(url, headers=headers)
-    result = basic_response_checks(rsp)
-    assert len(result) > 0
-    for a in result:
-        assert '_links' in a
-        assert 'id' in a
-    # check that test role is in list
-    test_list = [a for a in result if a['id'] == 'Internal_admin_test_suite_role']
-    assert len(test_list) == 1
-
-def test_list_role(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role')
-    rsp = requests.get(url, headers=headers)
-    result = basic_response_checks(rsp, check_links=True)
-    assert 'id' in result
-    assert 'accounts' in result
-    assert result['id'] == 'Internal_admin_test_suite_role'
-    assert len(result['accounts']) == 0
-
-def test_list_role_basic_service_accounts(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
-    rsp = requests.get(url, headers=headers)
-    result = basic_response_checks(rsp)
-    assert 'id' in result
-    assert 'accounts' in result
-    assert result['id'] == 'Internal_admin_test_suite_role'
-    assert len(result['accounts']) == 0
-
-def test_add_test_service_account_to_role(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
-    data = {'accountId': 'admin_test_suite_account'}
-    rsp = requests.post(url, data=data, headers=headers)
-    result = basic_response_checks(rsp, check_links=True)
-    assert 'id' in result
-    assert 'accounts' in result
-    assert result['id'] == 'Internal_admin_test_suite_role'
-    assert len(result['accounts']) == 1
-    assert result['accounts'][0] == 'admin_test_suite_account'
-
-def test_list_role_service_accounts(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
-    rsp = requests.get(url, headers=headers)
-    result = basic_response_checks(rsp)
-    assert 'id' in result
-    assert 'accounts' in result
-    assert result['id'] == 'Internal_admin_test_suite_role'
-    assert len(result['accounts']) == 1
-    assert result['accounts'][0] == 'admin_test_suite_account'
-
-def test_list_role_service_account(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts/admin_test_suite_account')
-    rsp = requests.get(url, headers=headers)
-    result = basic_response_checks(rsp)
-    assert 'id' in result
-    assert 'roles' in result
-    assert result['id'] == 'admin_test_suite_account'
-    assert len(result['roles']) == 2
-    assert 'Internal_everyone' in result['roles']
-    assert 'Internal_admin_test_suite_role' in result['roles']
-
-def test_list_added_service_account_roles(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles')
-    rsp = requests.get(url, headers=headers)
-    result = basic_response_checks(rsp)
-    assert 'id' in result
-    assert 'roles' in result
-    assert 'password' not in result
-    assert result['id'] == 'admin_test_suite_account'
-    assert len(result['roles']) == 2
-    assert 'Internal_everyone' in result['roles']
-    assert 'Internal_admin_test_suite_role' in result['roles']
-
-def test_delete_test_service_account_from_role(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts/admin_test_suite_account')
-    rsp = requests.delete(url, headers=headers)
-    assert rsp.status_code == 204
-
-def test_service_account_removed_roles(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
-    rsp = requests.get(url, headers=headers)
-    result = basic_response_checks(rsp, check_links=True)
-    assert 'id' in result
-    assert 'accounts' in result
-    assert result['id'] == 'Internal_admin_test_suite_role'
-    assert len(result['accounts']) == 0
-
-def test_service_account_removed_accounts(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles')
-    rsp = requests.get(url, headers=headers)
-    result = basic_response_checks(rsp, check_links=True)
-    assert 'id' in result
-    assert 'roles' in result
-    assert 'password' not in result
-    assert result['id'] == 'admin_test_suite_account'
-    assert len(result['roles']) == 1
-    assert 'Internal_everyone' in result['roles']
-
-def test_add_role_to_service_account(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles')
-    data = {'roleId': 'Internal_admin_test_suite_role'}
-    rsp = requests.post(url, data=data, headers=headers)
-    result = basic_response_checks(rsp, check_links=True)
-    assert 'id' in result
-    assert 'roles' in result
-    assert 'password' not in result
-    assert result['id'] == 'admin_test_suite_account'
-    assert len(result['roles']) == 2
-    assert 'Internal_everyone' in result['roles']
-    assert 'Internal_admin_test_suite_role' in result['roles']
-
-def test_list_role_service_account_2(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts/admin_test_suite_account')
-    rsp = requests.get(url, headers=headers)
-    result = basic_response_checks(rsp)
-    assert 'id' in result
-    assert 'roles' in result
-    assert result['id'] == 'admin_test_suite_account'
-    assert len(result['roles']) == 2
-    assert 'Internal_everyone' in result['roles']
-    assert 'Internal_admin_test_suite_role' in result['roles']
-
-def test_list_added_service_account_roles_2(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles')
-    rsp = requests.get(url, headers=headers)
-    result = basic_response_checks(rsp)
-    assert 'id' in result
-    assert 'roles' in result
-    assert 'password' not in result
-    assert result['id'] == 'admin_test_suite_account'
-    assert len(result['roles']) == 2
-    assert 'Internal_everyone' in result['roles']
-    assert 'Internal_admin_test_suite_role' in result['roles']
-
-def test_delete_role_from_service_account(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles/Internal_admin_test_suite_role')
-    rsp = requests.delete(url, headers=headers)
-    assert rsp.status_code == 204
-
-def test_service_account_removed_roles_2(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
-    rsp = requests.get(url, headers=headers)
-    result = basic_response_checks(rsp)
-    assert 'id' in result
-    assert 'accounts' in result
-    assert result['id'] == 'Internal_admin_test_suite_role'
-    assert len(result['accounts']) == 0
-
-def test_service_account_removed_accounts_2(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles')
-    rsp = requests.get(url, headers=headers)
-    result = basic_response_checks(rsp)
-    assert 'id' in result
-    assert 'roles' in result
-    assert 'password' not in result
-    assert result['id'] == 'admin_test_suite_account'
-    assert len(result['roles']) == 1
-    assert 'Internal_everyone' in result['roles']
-
-def test_delete_test_role(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role')
-    rsp = requests.delete(url, headers=headers)
-    assert rsp.status_code == 204
-
-def test_role_removed(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles')
-    rsp = requests.get(url, headers=headers)
-    result = basic_response_checks(rsp)
-    # check that test role is NOT in list
-    test_list = [a for a in result if a['id'] == 'Internal_admin_test_suite_role']
-    assert len(test_list) == 0
-
-def test_delete_test_service_account(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account')
-    rsp = requests.delete(url, headers=headers)
-    assert rsp.status_code == 204
-
-def test_account_removed(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts')
-    rsp = requests.get(url, headers=headers)
-    result = basic_response_checks(rsp)
-    assert len(result) > 0
-    for a in result:
-        assert '_links' in a
-        assert 'id' in a
-        assert 'password' not in a
-    # check that test account is NOT in list
-    test_list = [a for a in result if a['id'] == 'admin_test_suite_account']
-    assert len(test_list) == 0
-
-def test_list_clients(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts')
-    rsp = requests.get(url, headers=headers)
-    result = basic_response_checks(rsp)
-
+#
+# def test_basic_list_service_accounts(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_accounts')
+#     rsp = requests.get(url, headers=headers)
+#     basic_response_checks(rsp)
+#
+# def test_add_service_account(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_accounts')
+#     data = {'accountId': 'admin_test_suite_account', 'password': 'abcd123'}
+#     rsp = requests.post(url, data=data, headers=headers)
+#     result = basic_response_checks(rsp, check_links=True)
+#     assert 'roles' in result
+#     assert 'id' in result
+#     assert 'password' not in result
+#     assert len(result['roles']) > 0
+#     assert 'Internal_everyone' in result['roles']
+#     assert result['id'] == 'admin_test_suite_account'
+#
+# def test_list_service_accounts(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_accounts')
+#     rsp = requests.get(url, headers=headers)
+#     result = basic_response_checks(rsp)
+#     assert len(result) > 0
+#     for a in result:
+#         assert '_links' in a
+#         assert 'id' in a
+#         assert 'password' not in a
+#     # check that test account is in list
+#     test_list = [a for a in result if a['id'] == 'admin_test_suite_account']
+#     assert len(test_list) == 1
+#
+# def test_list_test_service_account(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account')
+#     rsp = requests.get(url, headers=headers)
+#     result = basic_response_checks(rsp, check_links=True)
+#     assert 'id' in result
+#     assert 'roles' in result
+#     assert 'password' not in result
+#     assert result['id'] == 'admin_test_suite_account'
+#     assert len(result['roles']) == 1
+#     assert 'Internal_everyone' in result['roles']
+#
+# def test_list_test_service_account_roles(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles')
+#     rsp = requests.get(url, headers=headers)
+#     result = basic_response_checks(rsp, check_links=True)
+#     assert 'id' in result
+#     assert 'roles' in result
+#     assert 'password' not in result
+#     assert result['id'] == 'admin_test_suite_account'
+#     assert len(result['roles']) == 1
+#     assert 'Internal_everyone' in result['roles']
+#
+#
+# def test_basic_list_roles(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_roles')
+#     rsp = requests.get(url, headers=headers)
+#     basic_response_checks(rsp)
+#
+# def test_add_role(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_roles')
+#     data = {'roleId': 'Internal_admin_test_suite_role'}
+#     rsp = requests.post(url, data=data, headers=headers)
+#     result = basic_response_checks(rsp, check_links=True)
+#     assert 'accounts' in result
+#     assert 'id' in result
+#     # roles should initially be unoccupied
+#     assert len(result['accounts']) == 0
+#     assert result['id'] == 'Internal_admin_test_suite_role'
+#
+# def test_list_roles(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_roles')
+#     rsp = requests.get(url, headers=headers)
+#     result = basic_response_checks(rsp)
+#     assert len(result) > 0
+#     for a in result:
+#         assert '_links' in a
+#         assert 'id' in a
+#     # check that test role is in list
+#     test_list = [a for a in result if a['id'] == 'Internal_admin_test_suite_role']
+#     assert len(test_list) == 1
+#
+# def test_list_role(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role')
+#     rsp = requests.get(url, headers=headers)
+#     result = basic_response_checks(rsp, check_links=True)
+#     assert 'id' in result
+#     assert 'accounts' in result
+#     assert result['id'] == 'Internal_admin_test_suite_role'
+#     assert len(result['accounts']) == 0
+#
+# def test_list_role_basic_service_accounts(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
+#     rsp = requests.get(url, headers=headers)
+#     result = basic_response_checks(rsp)
+#     assert 'id' in result
+#     assert 'accounts' in result
+#     assert result['id'] == 'Internal_admin_test_suite_role'
+#     assert len(result['accounts']) == 0
+#
+# def test_add_test_service_account_to_role(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
+#     data = {'accountId': 'admin_test_suite_account'}
+#     rsp = requests.post(url, data=data, headers=headers)
+#     result = basic_response_checks(rsp, check_links=True)
+#     assert 'id' in result
+#     assert 'accounts' in result
+#     assert result['id'] == 'Internal_admin_test_suite_role'
+#     assert len(result['accounts']) == 1
+#     assert result['accounts'][0] == 'admin_test_suite_account'
+#
+# def test_list_role_service_accounts(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
+#     rsp = requests.get(url, headers=headers)
+#     result = basic_response_checks(rsp)
+#     assert 'id' in result
+#     assert 'accounts' in result
+#     assert result['id'] == 'Internal_admin_test_suite_role'
+#     assert len(result['accounts']) == 1
+#     assert result['accounts'][0] == 'admin_test_suite_account'
+#
+# def test_list_role_service_account(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts/admin_test_suite_account')
+#     rsp = requests.get(url, headers=headers)
+#     result = basic_response_checks(rsp)
+#     assert 'id' in result
+#     assert 'roles' in result
+#     assert result['id'] == 'admin_test_suite_account'
+#     assert len(result['roles']) == 2
+#     assert 'Internal_everyone' in result['roles']
+#     assert 'Internal_admin_test_suite_role' in result['roles']
+#
+# def test_list_added_service_account_roles(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles')
+#     rsp = requests.get(url, headers=headers)
+#     result = basic_response_checks(rsp)
+#     assert 'id' in result
+#     assert 'roles' in result
+#     assert 'password' not in result
+#     assert result['id'] == 'admin_test_suite_account'
+#     assert len(result['roles']) == 2
+#     assert 'Internal_everyone' in result['roles']
+#     assert 'Internal_admin_test_suite_role' in result['roles']
+#
+# def test_delete_test_service_account_from_role(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts/admin_test_suite_account')
+#     rsp = requests.delete(url, headers=headers)
+#     assert rsp.status_code == 204
+#
+# def test_service_account_removed_roles(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
+#     rsp = requests.get(url, headers=headers)
+#     result = basic_response_checks(rsp, check_links=True)
+#     assert 'id' in result
+#     assert 'accounts' in result
+#     assert result['id'] == 'Internal_admin_test_suite_role'
+#     assert len(result['accounts']) == 0
+#
+# def test_service_account_removed_accounts(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles')
+#     rsp = requests.get(url, headers=headers)
+#     result = basic_response_checks(rsp, check_links=True)
+#     assert 'id' in result
+#     assert 'roles' in result
+#     assert 'password' not in result
+#     assert result['id'] == 'admin_test_suite_account'
+#     assert len(result['roles']) == 1
+#     assert 'Internal_everyone' in result['roles']
+#
+# def test_add_role_to_service_account(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles')
+#     data = {'roleId': 'Internal_admin_test_suite_role'}
+#     rsp = requests.post(url, data=data, headers=headers)
+#     result = basic_response_checks(rsp, check_links=True)
+#     assert 'id' in result
+#     assert 'roles' in result
+#     assert 'password' not in result
+#     assert result['id'] == 'admin_test_suite_account'
+#     assert len(result['roles']) == 2
+#     assert 'Internal_everyone' in result['roles']
+#     assert 'Internal_admin_test_suite_role' in result['roles']
+#
+# def test_list_role_service_account_2(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts/admin_test_suite_account')
+#     rsp = requests.get(url, headers=headers)
+#     result = basic_response_checks(rsp)
+#     assert 'id' in result
+#     assert 'roles' in result
+#     assert result['id'] == 'admin_test_suite_account'
+#     assert len(result['roles']) == 2
+#     assert 'Internal_everyone' in result['roles']
+#     assert 'Internal_admin_test_suite_role' in result['roles']
+#
+# def test_list_added_service_account_roles_2(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles')
+#     rsp = requests.get(url, headers=headers)
+#     result = basic_response_checks(rsp)
+#     assert 'id' in result
+#     assert 'roles' in result
+#     assert 'password' not in result
+#     assert result['id'] == 'admin_test_suite_account'
+#     assert len(result['roles']) == 2
+#     assert 'Internal_everyone' in result['roles']
+#     assert 'Internal_admin_test_suite_role' in result['roles']
+#
+# def test_delete_role_from_service_account(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles/Internal_admin_test_suite_role')
+#     rsp = requests.delete(url, headers=headers)
+#     assert rsp.status_code == 204
+#
+# def test_service_account_removed_roles_2(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
+#     rsp = requests.get(url, headers=headers)
+#     result = basic_response_checks(rsp)
+#     assert 'id' in result
+#     assert 'accounts' in result
+#     assert result['id'] == 'Internal_admin_test_suite_role'
+#     assert len(result['accounts']) == 0
+#
+# def test_service_account_removed_accounts_2(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles')
+#     rsp = requests.get(url, headers=headers)
+#     result = basic_response_checks(rsp)
+#     assert 'id' in result
+#     assert 'roles' in result
+#     assert 'password' not in result
+#     assert result['id'] == 'admin_test_suite_account'
+#     assert len(result['roles']) == 1
+#     assert 'Internal_everyone' in result['roles']
+#
+# def test_delete_test_role(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role')
+#     rsp = requests.delete(url, headers=headers)
+#     assert rsp.status_code == 204
+#
+# def test_role_removed(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_roles')
+#     rsp = requests.get(url, headers=headers)
+#     result = basic_response_checks(rsp)
+#     # check that test role is NOT in list
+#     test_list = [a for a in result if a['id'] == 'Internal_admin_test_suite_role']
+#     assert len(test_list) == 0
+#
+# def test_delete_test_service_account(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account')
+#     rsp = requests.delete(url, headers=headers)
+#     assert rsp.status_code == 204
+#
+# def test_account_removed(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_accounts')
+#     rsp = requests.get(url, headers=headers)
+#     result = basic_response_checks(rsp)
+#     assert len(result) > 0
+#     for a in result:
+#         assert '_links' in a
+#         assert 'id' in a
+#         assert 'password' not in a
+#     # check that test account is NOT in list
+#     test_list = [a for a in result if a['id'] == 'admin_test_suite_account']
+#     assert len(test_list) == 0
+#
+# def test_list_clients(headers):
+#     url = '{}/{}'.format(base_url, '/admin/service_accounts')
+#     rsp = requests.get(url, headers=headers)
+#     result = basic_response_checks(rsp)
+#
 def test_list_apis(headers):
     url = '{}/{}'.format(base_url, '/admin/apis')
     rsp = requests.get(url, headers=headers)
@@ -331,8 +335,6 @@ def check_basic_api_response(result, expected_status='CREATED'):
     assert result['context'] == '/httpbin_admin_test_suite/v0.1'
     assert 'name' in result
     assert result['name'] == 'httpbin_admin_test_suite'
-    assert 'environments' in result
-    assert result['environments'] == 'Production and Sandbox'
     assert 'owner' in result
     assert result['owner'] == 'admin'
     assert 'version' in result
@@ -391,7 +393,14 @@ def test_delete_restricted_api(headers):
     url = '{}/{}'.format(base_url, '/admin/apis/httpbin_restricted_admin_test_suite-admin-v0.1')
     rsp = requests.delete(url, headers=headers)
     assert rsp.status_code == 204
-
+    url = '{}/{}'.format(base_url, '/admin/apis/httpbin_restricted_admin_test_suite-admin-v0.1')
+    rsp = requests.get(url, headers=headers)
+    assert rsp.status_code == 400
+    url = '{}/{}'.format(base_url, '/admin/apis')
+    rsp = requests.get(url, headers=headers)
+    result = basic_response_checks(rsp)
+    for api in result:
+        assert not api['id'] == 'httpbin_restricted_admin_test_suite-admin-v0.1'
 
 
 
