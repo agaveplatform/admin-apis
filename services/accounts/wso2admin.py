@@ -118,6 +118,24 @@ class ApiAdmin(Wso2BasicAuthAdmin):
         rsp = requests.post(self.list_url, cookies=self.cookies, params=params, verify=self.verify)
         return rsp.json().get('api')
 
+    def audit_update_api_def(self, d):
+        """Check an API update for correctness."""
+        self.audit_api_def(d)
+
+    def update_api(self, d):
+        """Update an existing api."""
+        self._authn()
+        self.audit_update_api_def(d)
+        params = self.build_wso2_api_desc(d)
+        params['action'] = 'updateAPI'
+        try:
+            rsp = requests.post(self.add_url, cookies=self.cookies, params=params, verify=self.verify)
+        except Exception as e:
+            raise DAOError('There was an error trying to add the API. Details: {}'.format(e))
+
+        return rsp
+
+
     def audit_api_def(self, d):
         """Check an API definition for correctness."""
         if not d.get('name'):

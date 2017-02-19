@@ -328,11 +328,11 @@ def test_list_apis(headers):
         assert 'status' in api
         assert 'version' in api
 
-def check_basic_api_response(result, expected_status='CREATED'):
+def check_basic_api_response(result, expected_status='CREATED', expected_context='/httpbin_admin_test_suite/v0.1'):
     assert 'id' in result
     assert result['id'] == 'httpbin_admin_test_suite-admin-v0.1'
     assert 'context' in result
-    assert result['context'] == '/httpbin_admin_test_suite/v0.1'
+    assert result['context'] == expected_context
     assert 'name' in result
     assert result['name'] == 'httpbin_admin_test_suite'
     assert 'owner' in result
@@ -364,6 +364,38 @@ def test_add_basic_api(headers):
     check_basic_api_response(result)
 
 def test_list_added_basic_api(headers):
+    url = '{}/{}'.format(base_url, '/admin/apis/httpbin_admin_test_suite-admin-v0.1')
+    rsp = requests.get(url, headers=headers)
+    result = basic_response_checks(rsp, check_links=True)
+    check_basic_api_response(result)
+
+def test_update_basic_api(headers):
+    url = '{}/{}'.format(base_url, '/admin/apis/httpbin_admin_test_suite-admin-v0.1')
+    data = json.load(open('/tests/httpbin_basic2.json'))
+    data['name'] = 'httpbin_admin_test_suite'
+    data['path'] = '/httpbin_admin_test_suite2'
+    headers['Content-Type'] = 'application/json'
+    rsp = requests.post(url, data=json.dumps(data), headers=headers)
+    result = basic_response_checks(rsp, check_links=True)
+    check_basic_api_response(result, expected_context='/httpbin_admin_test_suite2/v0.1')
+
+def test_list_updated_basic_api(headers):
+    url = '{}/{}'.format(base_url, '/admin/apis/httpbin_admin_test_suite-admin-v0.1')
+    rsp = requests.get(url, headers=headers)
+    result = basic_response_checks(rsp, check_links=True)
+    check_basic_api_response(result, expected_context='/httpbin_admin_test_suite2/v0.1')
+
+def test_update_basic_api_back(headers):
+    url = '{}/{}'.format(base_url, '/admin/apis/httpbin_admin_test_suite-admin-v0.1')
+    data = json.load(open('/tests/httpbin_basic.json'))
+    data['name'] = 'httpbin_admin_test_suite'
+    data['path'] = '/httpbin_admin_test_suite'
+    headers['Content-Type'] = 'application/json'
+    rsp = requests.post(url, data=json.dumps(data), headers=headers)
+    result = basic_response_checks(rsp, check_links=True)
+    check_basic_api_response(result)
+
+def test_list_updated_back_basic_api(headers):
     url = '{}/{}'.format(base_url, '/admin/apis/httpbin_admin_test_suite-admin-v0.1')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp, check_links=True)

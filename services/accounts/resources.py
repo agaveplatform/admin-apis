@@ -251,6 +251,34 @@ class ApiResource(Resource):
         """Get details about an API."""
         return ok(result=models.api_details(api_id), msg="API retrieved successfully.")
 
+    def post(self, api_id):
+        """Update an API."""
+        json_data = request.get_json()
+        if not json_data:
+            raise ResourceError(msg="Content type JSON required for creating APIs.")
+        # first, find the API
+        try:
+            api = models.get_api_model(api_id=api_id)
+        except DAOError:
+            raise ResourceError(msg="API not found.")
+        except TypeError as e:
+            raise ResourceError(msg="Problem looking up API: {}.".format(e))
+
+        admin = ApiAdmin()
+        try:
+            rsp = admin.update_api(json_data)
+        except DAOError as e:
+            raise ResourceError(msg='Error trying to update API: {}'.format(e))
+        if not rsp.status_code == 200 or rsp.json().get('error'):
+            raise ResourceError(msg='Error trying to update API: {}'.format(rsp.content))
+        a = {}
+        a['name'] = json_data.get('name')
+        a['version'] = json_data.get('version') or 'v2'
+        a['provider'] = 'admin'
+        return ok(result=models.api_details(models.get_api_id(a)),
+                  msg="API created successfully.")
+
+
     def validate_put(self):
         parser = RequestParser()
         parser.add_argument('status', type=str, required=True, help='The status for the API.')
