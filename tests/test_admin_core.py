@@ -1,6 +1,6 @@
-# Functional test suite for the admin services.
+# Functional test suite for the Agave Platform Admin Services.
 # This test suite runs in its own docker container. To build the image, run
-#     docker build -f Dockerfile-test -t agaveapi/flask_admin_testsuite .
+#     docker build -f Dockerfile-test -t agaveplatform/admin-api-tests .
 # from within the root project directory.
 #
 # The development stack, and therefore the test suite, depend on a working, instance of APIM where the WSDL services
@@ -10,7 +10,7 @@
 #
 # To run the tests, first start the development stack using the docker-compose.yml in the root directory
 # Then, also from the root directory, execute:
-#     docker run -e base_url=http://172.17.0.1:8000 -e wso2admin_password=$pass -it --rm agaveapi/flask_admin_testsuite
+#     docker run -e base_url=http://172.17.0.1:8000 -e wso2admin_password=$pass -it --rm agaveplatform/admin-api-tests
 
 
 import json

@@ -1,7 +1,7 @@
 # Module to ensure an API is registered and published in an APIM instance.
 # This script assumes that it has local access to the admin services.
 #
-# Run this script using the agaveapi/flask_admin_utils image mounting an api.json file at the root:
+# Run this script using the agaveplatform/admin-api-utils image mounting an api.json file at the root:
 #  docker run -it --rm -v /path/to/my_api.json:/api.json agaveapi/flask_admin_utils
 
 # Parameters: pass as environment variables:
@@ -10,12 +10,7 @@
 # For the A/B deployment of the Agave auth services, one approach is to link this container to the admin services
 # nginx container. To do this, first determine whether the A stack or B stack is deployed and then run:
 #
-# for A stack:
-# docker run --rm --link a_adminnginx_1 -it -e base_url=http://a_adminnginx_1:80 \
-#            -v $(pwd)/admin_services.json:/api.json agaveapi/flask_admin_utils
-#
-# for B stack:
-# docker run --rm --link b_adminnginx_1 -it -e base_url=http://b_adminnginx_1:80 \
+# docker run --rm -it -e base_url=http://admin-proxy:80 \
 #            -v $(pwd)/admin_services.json:/api.json agaveapi/flask_admin_utils
 
 import json
@@ -38,15 +33,17 @@ def headers():
     return headers
 
 def get_api_id():
-    data = json.load(open('/api.json'))
+    api_definition_path = os.environ.get('api_file', '/api.json');
+    api_definition = json.load(open(api_definition_path))
     try:
-        return '{}-admin-{}'.format(data['name'], data['version'])
+        return '{}-admin-{}'.format(api_definition['name'], api_definition['version'])
     except KeyError:
         sys.exit("API json missing name or version.")
 
 def get_roles():
-    data = json.load(open('/api.json'))
-    roles = data.get('roles', [])
+    api_definition_path = os.environ.get('api_file', '/api.json');
+    api_definition = json.load(open(api_definition_path))
+    roles = api_definition.get('roles', [])
     if type(roles) == list:
         return roles
     else:
