@@ -1,19 +1,18 @@
 ---
 swagger: '2.0'
 info:
-  title: Agave Tenant Admin Sevices
-  description: tenant administration and management of configurable aspects of the
-    platform.
+  title: Agave Platform Admin Sevices
+  description: Self-service administration and management of Agave Tenants.
   version: v2
   license:
     name: BSD 2-Clause
-    url: https://opensource.org/licenses/BSD-2-Clause
-host: dev.tenants.staging.agaveapi.co
+    url: https://opensource.org/licenses/BSD-3-Clause
+host: sandbox.agaveplatform.org
 securityDefinitions:
   auth:
     type: oauth2
     flow: implicit
-    authorizationUrl: https://dev.tenants.staging.agaveapi.co/authorize
+    authorizationUrl: https://sandbox.agaveplatform.org/authorize
     scopes:
       PRODUCTION: Catchall scope for all admin services
 schemes:
@@ -572,7 +571,7 @@ definitions:
           version is 'v2'.
       url:
         type: string
-        default: https://httpbin.agaveapi.co
+        default: https://httpbin.agaveplatform.org
         description: The production URL for the backend service, including the protocol
           (http or https).
       visibility:
