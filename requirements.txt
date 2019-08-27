@@ -1,4 +1,3 @@
-ipython==5.1.0
-# agaveflask
--e git+https://jstubbs@bitbucket.org/agaveapi/agaveflask.git#egg=agaveflask
+# python-api-starter
+-e git+https://github.com/agaveplatform/python-api-starter.git@develop#egg=agaveflask
 suds-jurko
