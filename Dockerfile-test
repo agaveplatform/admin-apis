@@ -1,6 +1,6 @@
-# Image:  agaveapi/flask_admin_testsuite
+# Image:  agaveplatform/admin-api-tests
 
-from agaveapi/flask_api
+FROM agaveplatform/python-api-starter:develop
 
 RUN pip3 install pytest
 

@@ -1,6 +1,6 @@
-# Image:  agaveapi/flask_admin_utils
+# Image:  agaveplatform/admin-api-utils
 
-from agaveapi/flask_api
+FROM agaveplatform/python-api-starter:develop
 
 ADD utils /utils
 

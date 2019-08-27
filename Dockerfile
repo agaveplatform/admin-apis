@@ -1,6 +1,6 @@
-# Image: agaveapi/flask_admin_services
+# Image: agaveplatform/admin-api
 
-from agaveapi/flask_api
+FROM agaveplatform/python-api-starter:develop
 
 ADD requirements.txt /requirements.txt
 RUN pip3 install -r /requirements.txt
