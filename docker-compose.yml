@@ -1,34 +1,78 @@
-adminnginx:
-    image: agaveapi/admin_services_nginx
-    links:
-        - adminjwt
-        - adminaccounts
-    ports:
-        - "8000:80"
-    command: /bin/bash -c "env && envsubst < /etc/nginx/sites-enabled/flask-project.template > /etc/nginx/sites-enabled/flask-project && rm -f /etc/nginx/sites-enabled/flask-project.template && nginx -g 'daemon off;'"
+version: '3.2'
 
+networks:
+    admin-internal:
 
-adminjwt:
-    image: agaveapi/flask_admin_services
-    ports:
-        - "5000:5000"
-#    volumes:
-#        - ./local-dev.conf:/etc/service.conf
-    environment:
-        package: /services/jwt
+services:
 
-# need to export wso2admin_password before starting up the services
-adminaccounts:
-    image: agaveapi/flask_admin_services
-    ports:
-        - "5001:5000"
-#    volumes:
-#        - ./local-dev.conf:/etc/service.conf
-    extra_hosts:
-        dev1.tenants.sandbox.agaveapi.co: 129.114.6.51
-    environment:
-        package: /services/accounts
-        wso2admin_username: admin
-        wso2admin_password:
-        base_url: dev1.tenants.sandbox.agaveapi.co
-        port: 9443
+    traefik:
+        image: traefik:latest
+        ports:
+            - "9000:80"
+        command:
+            - "traefik"
+            - "-c"
+            - "/configs/traefik.toml"
+        volumes:
+          - ./images/traefik:/configs
+        networks:
+            - admin-internal
+
+#    admin-proxy:
+#        build:
+#            context: images/nginx
+#        image: agaveplatform/admin-api-proxy:develop
+#        links:
+#            - admin-accounts
+#            - admin-jwt
+#        ports:
+#            - "8000:80"
+#        command: /bin/bash -c "env && envsubst < /etc/nginx/sites-enabled/flask-project.template > /etc/nginx/sites-enabled/flask-project && rm -f /etc/nginx/sites-enabled/flask-project.template && nginx -g 'daemon off;'"
+#        networks:
+#            - admin-internal
+
+    admin-jwt:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: agaveplatform/admin-api:develop
+        ports:
+            - "5001:80"
+    #    volumes:
+    #        - ./local-dev.conf:/etc/service.conf
+        environment:
+            server: production
+            package: /services/jwt
+            port: 80
+        networks:
+            - admin-internal
+
+    # need to export wso2admin_password before starting up the services
+    admin-accounts:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: agaveplatform/admin-api:develop
+        command:
+            - /bin/bash
+            - -exec
+            - |-
+              openssl x509 -in <(openssl s_client -servername "$$(basename $$base_url)" -connect "$$(basename $$base_url):$$base_port" -prexit 2>/dev/null) > "/etc/ssl/certs/$$base_url-bundle.pem";
+              ls -al "/etc/ssl/certs/$$base_url-bundle.pem";
+              cat "/etc/ssl/certs/$$base_url-bundle.pem";
+              /_flask_api/entry.sh
+        ports:
+            - "5000:80"
+    #    volumes:
+    #        - ./local-dev.conf:/etc/service.conf
+        environment:
+            server: production
+            package: /services/accounts
+            wso2admin_username: admin
+            wso2admin_password:
+            wso2admin_verify: /etc/ssl/certs/minikube-bundle.pem
+            base_url: minikube
+            base_port: 443
+            port: 80
+        networks:
+            - admin-internal

@@ -1,0 +1,64 @@
+[traefikLog]
+  filePath = "/logs/traefik.log"
+
+[accessLog]
+  filePath = "/logs/access.log"
+
+defaultEntryPoints = ["http"]
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+#    [entryPoints.http.redirect]
+#      entryPoint = "https"
+#  [entryPoints.https]
+#  address = ":443"
+#    [entryPoints.https.tls]
+#      [[entryPoints.https.tls.certificates]]
+#      CertFile = "/ssl/tls.crt"
+#      KeyFile = "/ssl/tls.key"
+
+[web]
+address = ":8443"
+#CertFile = "/ssl/tls.crt"
+#KeyFile = "/ssl/tls.key"
+
+[file]
+
+# Static rules. This forces Traefik to proxy requests to a single Jenkins server with SNI enabled.
+[backends]
+  [backends.jwt]
+    [backends.jwt.servers]
+      [backends.jwt.servers.server0]
+        url = "http://admin-jwt"
+        weight = 1
+    [backends.jwt.loadBalancer]
+      method = "drr"
+
+	[backends.accounts]
+    [backends.accounts.servers]
+      [backends.accounts.servers.server0]
+        url = "http://admin-accounts"
+        weight = 1
+
+    [backends.accounts.loadBalancer]
+      method = "drr"
+
+[frontends]
+
+  [frontends.jwt]
+    backend = "jwt"
+    passHostHeader = true
+    passTLSCert = false
+
+    [frontends.jwt.routes]
+      [frontends.jwt.routes.route0]
+        rule = "PathPrefix:/admin/jwt"
+
+	[frontends.accounts]
+    backend = "accounts"
+    passHostHeader = true
+    passTLSCert = false
+
+    [frontends.accounts.routes]
+      [frontends.accounts.routes.route0]
+        rule = "PathPrefix:/admin/service_accounts,/admin/service_roles,/admin/clients,/admin/apis;ReplacePathRegex: ^/admin/service_roles /admin/roles"

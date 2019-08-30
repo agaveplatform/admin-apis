@@ -2,6 +2,8 @@
 
 FROM agaveplatform/python-api-starter:develop
 
+MAINTAINER Rion Dooley <deardooley@gmail.com>
+
 RUN pip3 install pytest
 
 ADD tests /tests

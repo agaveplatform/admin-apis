@@ -20,8 +20,15 @@ import pytest
 import requests
 
 base_url = os.environ.get('base_url', 'http://localhost:8000')
+if base_url.endswith('/'):
+    base_url = base_url.rstrip('/')
 
 print("Using base URL: {}".format(base_url))
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "env(name): mark test to run only on named environment"
+    )
 
 @pytest.fixture(scope='session')
 def headers():
@@ -51,14 +58,15 @@ def basic_response_checks(rsp, check_links=False):
         assert '_links' in result
     return result
 
-
+@pytest.mark.accounts
 def test_basic_list_service_accounts(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts')
+    url = '{}/{}'.format(base_url, 'admin/service_accounts')
     rsp = requests.get(url, headers=headers)
     basic_response_checks(rsp)
 
+@pytest.mark.accounts
 def test_add_service_account(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts')
+    url = '{}/{}'.format(base_url, 'admin/service_accounts')
     data = {'accountId': 'admin_test_suite_account', 'password': 'abcd123'}
     rsp = requests.post(url, data=data, headers=headers)
     result = basic_response_checks(rsp, check_links=True)
@@ -69,8 +77,9 @@ def test_add_service_account(headers):
     assert 'Internal_everyone' in result['roles']
     assert result['id'] == 'admin_test_suite_account'
 
+@pytest.mark.accounts
 def test_list_service_accounts(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts')
+    url = '{}/{}'.format(base_url, 'admin/service_accounts')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     assert len(result) > 0
@@ -82,8 +91,9 @@ def test_list_service_accounts(headers):
     test_list = [a for a in result if a['id'] == 'admin_test_suite_account']
     assert len(test_list) == 1
 
+@pytest.mark.accounts
 def test_list_test_service_account(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account')
+    url = '{}/{}'.format(base_url, 'admin/service_accounts/admin_test_suite_account')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp, check_links=True)
     assert 'id' in result
@@ -93,8 +103,10 @@ def test_list_test_service_account(headers):
     assert len(result['roles']) == 1
     assert 'Internal_everyone' in result['roles']
 
+@pytest.mark.accounts
+@pytest.mark.account_roles
 def test_list_test_service_account_roles(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles')
+    url = '{}/{}'.format(base_url, 'admin/service_accounts/admin_test_suite_account/roles')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp, check_links=True)
     assert 'id' in result
@@ -105,13 +117,15 @@ def test_list_test_service_account_roles(headers):
     assert 'Internal_everyone' in result['roles']
 
 
+@pytest.mark.roles
 def test_basic_list_roles(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles')
+    url = '{}/{}'.format(base_url, 'admin/service_roles')
     rsp = requests.get(url, headers=headers)
     basic_response_checks(rsp)
 
+@pytest.mark.roles
 def test_add_role(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles')
+    url = '{}/{}'.format(base_url, 'admin/service_roles')
     data = {'roleId': 'Internal_admin_test_suite_role'}
     rsp = requests.post(url, data=data, headers=headers)
     result = basic_response_checks(rsp, check_links=True)
@@ -121,8 +135,9 @@ def test_add_role(headers):
     assert len(result['accounts']) == 0
     assert result['id'] == 'Internal_admin_test_suite_role'
 
+@pytest.mark.roles
 def test_list_roles(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles')
+    url = '{}/{}'.format(base_url, 'admin/service_roles')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     assert len(result) > 0
@@ -133,8 +148,9 @@ def test_list_roles(headers):
     test_list = [a for a in result if a['id'] == 'Internal_admin_test_suite_role']
     assert len(test_list) == 1
 
+@pytest.mark.roles
 def test_list_role(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role')
+    url = '{}/{}'.format(base_url, 'admin/service_roles/Internal_admin_test_suite_role')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp, check_links=True)
     assert 'id' in result
@@ -142,8 +158,10 @@ def test_list_role(headers):
     assert result['id'] == 'Internal_admin_test_suite_role'
     assert len(result['accounts']) == 0
 
+@pytest.mark.roles
+@pytest.mark.role_accounts
 def test_list_role_basic_service_accounts(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
+    url = '{}/{}'.format(base_url, 'admin/service_roles/Internal_admin_test_suite_role/service_accounts')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     assert 'id' in result
@@ -151,8 +169,10 @@ def test_list_role_basic_service_accounts(headers):
     assert result['id'] == 'Internal_admin_test_suite_role'
     assert len(result['accounts']) == 0
 
+@pytest.mark.roles
+@pytest.mark.role_accounts
 def test_add_test_service_account_to_role(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
+    url = '{}/{}'.format(base_url, 'admin/service_roles/Internal_admin_test_suite_role/service_accounts')
     data = {'accountId': 'admin_test_suite_account'}
     rsp = requests.post(url, data=data, headers=headers)
     result = basic_response_checks(rsp, check_links=True)
@@ -162,8 +182,10 @@ def test_add_test_service_account_to_role(headers):
     assert len(result['accounts']) == 1
     assert result['accounts'][0] == 'admin_test_suite_account'
 
+@pytest.mark.roles
+@pytest.mark.role_accounts
 def test_list_role_service_accounts(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
+    url = '{}/{}'.format(base_url, 'admin/service_roles/Internal_admin_test_suite_role/service_accounts')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     assert 'id' in result
@@ -172,8 +194,9 @@ def test_list_role_service_accounts(headers):
     assert len(result['accounts']) == 1
     assert result['accounts'][0] == 'admin_test_suite_account'
 
+@pytest.mark.roles
 def test_list_role_service_account(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts/admin_test_suite_account')
+    url = '{}/{}'.format(base_url, 'admin/service_roles/Internal_admin_test_suite_role/service_accounts/admin_test_suite_account')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     assert 'id' in result
@@ -183,8 +206,10 @@ def test_list_role_service_account(headers):
     assert 'Internal_everyone' in result['roles']
     assert 'Internal_admin_test_suite_role' in result['roles']
 
+@pytest.mark.accounts
+@pytest.mark.account_roles
 def test_list_added_service_account_roles(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles')
+    url = '{}/{}'.format(base_url, 'admin/service_accounts/admin_test_suite_account/roles')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     assert 'id' in result
@@ -195,13 +220,17 @@ def test_list_added_service_account_roles(headers):
     assert 'Internal_everyone' in result['roles']
     assert 'Internal_admin_test_suite_role' in result['roles']
 
+@pytest.mark.roles
+@pytest.mark.role_accounts
 def test_delete_test_service_account_from_role(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts/admin_test_suite_account')
+    url = '{}/{}'.format(base_url, 'admin/service_roles/Internal_admin_test_suite_role/service_accounts/admin_test_suite_account')
     rsp = requests.delete(url, headers=headers)
     assert rsp.status_code == 204
 
+@pytest.mark.roles
+@pytest.mark.role_accounts
 def test_service_account_removed_roles(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
+    url = '{}/{}'.format(base_url, 'admin/service_roles/Internal_admin_test_suite_role/service_accounts')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp, check_links=True)
     assert 'id' in result
@@ -209,8 +238,10 @@ def test_service_account_removed_roles(headers):
     assert result['id'] == 'Internal_admin_test_suite_role'
     assert len(result['accounts']) == 0
 
+@pytest.mark.accounts
+@pytest.mark.account_roles
 def test_service_account_removed_accounts(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles')
+    url = '{}/{}'.format(base_url, 'admin/service_accounts/admin_test_suite_account/roles')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp, check_links=True)
     assert 'id' in result
@@ -220,8 +251,10 @@ def test_service_account_removed_accounts(headers):
     assert len(result['roles']) == 1
     assert 'Internal_everyone' in result['roles']
 
+@pytest.mark.accounts
+@pytest.mark.account_roles
 def test_add_role_to_service_account(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles')
+    url = '{}/{}'.format(base_url, 'admin/service_accounts/admin_test_suite_account/roles')
     data = {'roleId': 'Internal_admin_test_suite_role'}
     rsp = requests.post(url, data=data, headers=headers)
     result = basic_response_checks(rsp, check_links=True)
@@ -233,8 +266,10 @@ def test_add_role_to_service_account(headers):
     assert 'Internal_everyone' in result['roles']
     assert 'Internal_admin_test_suite_role' in result['roles']
 
+@pytest.mark.roles
+@pytest.mark.role_accounts
 def test_list_role_service_account_2(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts/admin_test_suite_account')
+    url = '{}/{}'.format(base_url, 'admin/service_roles/Internal_admin_test_suite_role/service_accounts/admin_test_suite_account')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     assert 'id' in result
@@ -244,8 +279,10 @@ def test_list_role_service_account_2(headers):
     assert 'Internal_everyone' in result['roles']
     assert 'Internal_admin_test_suite_role' in result['roles']
 
+@pytest.mark.accounts
+@pytest.mark.account_roles
 def test_list_added_service_account_roles_2(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles')
+    url = '{}/{}'.format(base_url, 'admin/service_accounts/admin_test_suite_account/roles')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     assert 'id' in result
@@ -256,13 +293,17 @@ def test_list_added_service_account_roles_2(headers):
     assert 'Internal_everyone' in result['roles']
     assert 'Internal_admin_test_suite_role' in result['roles']
 
+@pytest.mark.accounts
+@pytest.mark.account_roles
 def test_delete_role_from_service_account(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles/Internal_admin_test_suite_role')
+    url = '{}/{}'.format(base_url, 'admin/service_accounts/admin_test_suite_account/roles/Internal_admin_test_suite_role')
     rsp = requests.delete(url, headers=headers)
     assert rsp.status_code == 204
 
+@pytest.mark.roles
+@pytest.mark.role_accounts
 def test_service_account_removed_roles_2(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role/service_accounts')
+    url = '{}/{}'.format(base_url, 'admin/service_roles/Internal_admin_test_suite_role/service_accounts')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     assert 'id' in result
@@ -270,8 +311,10 @@ def test_service_account_removed_roles_2(headers):
     assert result['id'] == 'Internal_admin_test_suite_role'
     assert len(result['accounts']) == 0
 
+@pytest.mark.accounts
+@pytest.mark.account_roles
 def test_service_account_removed_accounts_2(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account/roles')
+    url = '{}/{}'.format(base_url, 'admin/service_accounts/admin_test_suite_account/roles')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     assert 'id' in result
@@ -281,36 +324,43 @@ def test_service_account_removed_accounts_2(headers):
     assert len(result['roles']) == 1
     assert 'Internal_everyone' in result['roles']
 
+@pytest.mark.roles
 def test_delete_test_role(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles/Internal_admin_test_suite_role')
+    url = '{}/{}'.format(base_url, 'admin/service_roles/Internal_admin_test_suite_role')
     rsp = requests.delete(url, headers=headers)
     assert rsp.status_code == 204
 
+@pytest.mark.accounts
+@pytest.mark.account_roles
 def test_deleted_role_not_present(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/Internal_admin_test_suite_role')
+    url = '{}/{}'.format(base_url, 'admin/service_accounts/Internal_admin_test_suite_role')
     rsp = requests.get(url, headers=headers)
     assert rsp.status_code == 400
 
+@pytest.mark.roles
 def test_deleted_role_not_listed(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_roles')
+    url = '{}/{}'.format(base_url, 'admin/service_roles')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     # check that test role is NOT in list
     test_list = [a for a in result if a['id'] == 'Internal_admin_test_suite_role']
     assert len(test_list) == 0
 
+@pytest.mark.accounts
 def test_delete_test_service_account(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account')
+    url = '{}/{}'.format(base_url, 'admin/service_accounts/admin_test_suite_account')
     rsp = requests.delete(url, headers=headers)
     assert rsp.status_code == 204
 
+@pytest.mark.accounts
 def test_deleted_account_not_present(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts/admin_test_suite_account')
+    url = '{}/{}'.format(base_url, 'admin/service_accounts/admin_test_suite_account')
     rsp = requests.get(url, headers=headers)
     assert rsp.status_code == 400
 
+@pytest.mark.accounts
 def test_deleted_account_not_listed(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts')
+    url = '{}/{}'.format(base_url, 'admin/service_accounts')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     assert len(result) > 0
@@ -322,13 +372,15 @@ def test_deleted_account_not_listed(headers):
     test_list = [a for a in result if a['id'] == 'admin_test_suite_account']
     assert len(test_list) == 0
 
+@pytest.mark.accounts
 def test_list_clients(headers):
-    url = '{}/{}'.format(base_url, '/admin/service_accounts')
+    url = '{}/{}'.format(base_url, 'admin/service_accounts')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
 
+@pytest.mark.apis
 def test_list_apis(headers):
-    url = '{}/{}'.format(base_url, '/admin/apis')
+    url = '{}/{}'.format(base_url, 'admin/apis')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     for api in result:
@@ -362,9 +414,9 @@ def check_basic_api_response(result, expected_status='CREATED', expected_context
     assert 'DELETE' in result['methods']
     assert 'HEAD' in result['methods']
 
-
+@pytest.mark.apis
 def test_add_basic_api(headers):
-    url = '{}/{}'.format(base_url, '/admin/apis')
+    url = '{}/{}'.format(base_url, 'admin/apis')
     data = json.load(open('/tests/httpbin_basic.json'))
     data['name'] = 'httpbin_admin_test_suite'
     data['path'] = '/httpbin_admin_test_suite'
@@ -373,14 +425,16 @@ def test_add_basic_api(headers):
     result = basic_response_checks(rsp, check_links=True)
     check_basic_api_response(result)
 
+@pytest.mark.apis
 def test_list_added_basic_api(headers):
-    url = '{}/{}'.format(base_url, '/admin/apis/httpbin_admin_test_suite-admin-v0.1')
+    url = '{}/{}'.format(base_url, 'admin/apis/httpbin_admin_test_suite-admin-v0.1')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp, check_links=True)
     check_basic_api_response(result)
 
+@pytest.mark.apis
 def test_update_basic_api(headers):
-    url = '{}/{}'.format(base_url, '/admin/apis/httpbin_admin_test_suite-admin-v0.1')
+    url = '{}/{}'.format(base_url, 'admin/apis/httpbin_admin_test_suite-admin-v0.1')
     data = json.load(open('/tests/httpbin_basic2.json'))
     data['name'] = 'httpbin_admin_test_suite'
     data['path'] = '/httpbin_admin_test_suite2'
@@ -389,14 +443,16 @@ def test_update_basic_api(headers):
     result = basic_response_checks(rsp, check_links=True)
     check_basic_api_response(result, expected_context='/httpbin_admin_test_suite2/v0.1')
 
+@pytest.mark.apis
 def test_list_updated_basic_api(headers):
-    url = '{}/{}'.format(base_url, '/admin/apis/httpbin_admin_test_suite-admin-v0.1')
+    url = '{}/{}'.format(base_url, 'admin/apis/httpbin_admin_test_suite-admin-v0.1')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp, check_links=True)
     check_basic_api_response(result, expected_context='/httpbin_admin_test_suite2/v0.1')
 
+@pytest.mark.apis
 def test_update_basic_api_back(headers):
-    url = '{}/{}'.format(base_url, '/admin/apis/httpbin_admin_test_suite-admin-v0.1')
+    url = '{}/{}'.format(base_url, 'admin/apis/httpbin_admin_test_suite-admin-v0.1')
     data = json.load(open('/tests/httpbin_basic.json'))
     data['name'] = 'httpbin_admin_test_suite'
     data['path'] = '/httpbin_admin_test_suite'
@@ -405,22 +461,25 @@ def test_update_basic_api_back(headers):
     result = basic_response_checks(rsp, check_links=True)
     check_basic_api_response(result)
 
+@pytest.mark.apis
 def test_list_updated_back_basic_api(headers):
-    url = '{}/{}'.format(base_url, '/admin/apis/httpbin_admin_test_suite-admin-v0.1')
+    url = '{}/{}'.format(base_url, 'admin/apis/httpbin_admin_test_suite-admin-v0.1')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp, check_links=True)
     check_basic_api_response(result)
 
+@pytest.mark.apis
 def test_update_basic_status_published(headers):
-    url = '{}/{}'.format(base_url, '/admin/apis/httpbin_admin_test_suite-admin-v0.1')
+    url = '{}/{}'.format(base_url, 'admin/apis/httpbin_admin_test_suite-admin-v0.1')
     data = {'status': 'PUBLISHED'}
     headers['Content-Type'] = 'application/json'
     rsp = requests.put(url, data=json.dumps(data), headers=headers)
     result = basic_response_checks(rsp, check_links=True)
     check_basic_api_response(result, expected_status='PUBLISHED')
 
+@pytest.mark.apis
 def test_add_api_restricted_by_roles(headers):
-    url = '{}/{}'.format(base_url, '/admin/apis')
+    url = '{}/{}'.format(base_url, 'admin/apis')
     data = json.load(open('/tests/httpbin_restricted_by_role.json'))
     data['name'] = 'httpbin_restricted_admin_test_suite'
     data['path'] = '/httpbin_restricted_admin_test_suite'
@@ -432,19 +491,21 @@ def test_add_api_restricted_by_roles(headers):
     assert 'roles' in result
     assert result['roles'] == ['Internal_dev_sandbox-services-admin']
 
+@pytest.mark.apis
 def test_delete_basic_api(headers):
-    url = '{}/{}'.format(base_url, '/admin/apis/httpbin_admin_test_suite-admin-v0.1')
+    url = '{}/{}'.format(base_url, 'admin/apis/httpbin_admin_test_suite-admin-v0.1')
     rsp = requests.delete(url, headers=headers)
     assert rsp.status_code == 204
 
+@pytest.mark.apis
 def test_delete_restricted_api(headers):
-    url = '{}/{}'.format(base_url, '/admin/apis/httpbin_restricted_admin_test_suite-admin-v0.1')
+    url = '{}/{}'.format(base_url, 'admin/apis/httpbin_restricted_admin_test_suite-admin-v0.1')
     rsp = requests.delete(url, headers=headers)
     assert rsp.status_code == 204
-    url = '{}/{}'.format(base_url, '/admin/apis/httpbin_restricted_admin_test_suite-admin-v0.1')
+    url = '{}/{}'.format(base_url, 'admin/apis/httpbin_restricted_admin_test_suite-admin-v0.1')
     rsp = requests.get(url, headers=headers)
     assert rsp.status_code == 400
-    url = '{}/{}'.format(base_url, '/admin/apis')
+    url = '{}/{}'.format(base_url, 'admin/apis')
     rsp = requests.get(url, headers=headers)
     result = basic_response_checks(rsp)
     for api in result:

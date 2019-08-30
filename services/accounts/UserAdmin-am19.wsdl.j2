@@ -1455,13 +1455,13 @@
 </wsdl:binding>
 <wsdl:service name="UserAdmin">
 <wsdl:port name="UserAdminHttpsSoap11Endpoint" binding="tns:UserAdminSoap11Binding">
-<soap:address location="https://{{ base_url }}:{{ port }}/services/UserAdmin.UserAdminHttpsSoap11Endpoint"/>
+<soap:address location="https://{{ base_url }}:{{ base_port | default('443') }}/services/UserAdmin.UserAdminHttpsSoap11Endpoint"/>
 </wsdl:port>
 <wsdl:port name="UserAdminHttpsSoap12Endpoint" binding="tns:UserAdminSoap12Binding">
-<soap12:address location="https://{{ base_url }}:{{ port }}/services/UserAdmin.UserAdminHttpsSoap12Endpoint"/>
+<soap12:address location="https://{{ base_url }}:{{ base_port | default('443') }}/services/UserAdmin.UserAdminHttpsSoap12Endpoint"/>
 </wsdl:port>
 <wsdl:port name="UserAdminHttpsEndpoint" binding="tns:UserAdminHttpBinding">
-<http:address location="https://{{ base_url }}:{{ port }}/services/UserAdmin.UserAdminHttpsEndpoint"/>
+<http:address location="https://{{ base_url }}:{{ base_port | default('443') }}/services/UserAdmin.UserAdminHttpsEndpoint"/>
 </wsdl:port>
 </wsdl:service>
 </wsdl:definitions>

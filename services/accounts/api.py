@@ -46,7 +46,8 @@ api.add_resource(ApiResource, '/admin/apis/<string:api_id>')
 
 def compile():
     template_src = os.environ.get('template_path', '/services/accounts/UserAdmin-am19.wsdl.j2')
-    templates.render_template(template_src, '/services/accounts/UserAdmin-am19.wsdl', context=os.environ)
+    wsdl_path = os.environ.get('wsdl_path', '/services/accounts/UserAdmin-am19.wsdl')
+    templates.render_template(template_src, wsdl_path, context=os.environ)
     print("api.py finished compiling template.")
 
 compile()

@@ -7,6 +7,7 @@
 import base64
 import json
 import os
+import ssl
 
 import requests
 from suds.client import Client
@@ -16,6 +17,9 @@ from agaveflask.errors import DAOError
 
 API_VERSION = 'v2'
 
+# disable for the wsdl client as well. This is overkill, but works for us
+if os.environ.get('wso2admin_verify', 'false').lower() == 'false':
+    ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def role_out(role_id):
@@ -41,6 +45,7 @@ class Wso2WSDLAdmin(object):
         self.userpass = base64.standard_b64encode(str.encode("{}:{}".format(self.username, self.password)))
         self.wsdl = wsdl
         self.client = Client(wsdl)
+
         self.client.set_options(headers={'Authorization': 'Basic {}'.format(self.userpass.decode('utf-8'))})
 
     def __getattr__(self, key):
@@ -56,7 +61,8 @@ class Wso2WSDLAdmin(object):
 
 class UserAdmin(Wso2WSDLAdmin):
     def __init__(self):
-        super(UserAdmin, self).__init__(wsdl='file:///services/accounts/UserAdmin-am19.wsdl')
+        wsdl_path="file:///services/accounts/UserAdmin-am19.wsdl"
+        super(UserAdmin, self).__init__(wsdl=wsdl_path)
 
 
 class Wso2BasicAuthAdmin(object):
@@ -115,6 +121,7 @@ class ApiAdmin(Wso2BasicAuthAdmin):
                   'name': api_name,
                   'version': api_version,
                   'provider': api_provider}
+
         rsp = requests.post(self.list_url, cookies=self.cookies, params=params, verify=self.verify)
         return rsp.json().get('api')
 

@@ -2,6 +2,8 @@
 
 FROM agaveplatform/python-api-starter:develop
 
+MAINTAINER Rion Dooley <deardooley@gmail.com>
+
 ADD requirements.txt /requirements.txt
 RUN pip3 install -r /requirements.txt
 
