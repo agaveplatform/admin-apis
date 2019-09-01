@@ -2,24 +2,33 @@
 # This script assumes that it has local access to the admin services.
 #
 # Run this script using the agaveplatform/admin-api-utils image mounting an api.json file at the root:
-#  docker run -it --rm -v /path/to/my_api.json:/api.json agaveapi/flask_admin_utils
+#  docker run -it --rm -v /path/to/my_api.json:/api.json agaveplatform/admin-api-utils
 
 # Parameters: pass as environment variables:
-# base_url: should be the URL for the admin nginx proxy directly since this script must bypass APIM.
+# base_url: should be the URL for the admin apis proxy since this script must bypass APIM.
 
+# For the A/B deployment of the Agave auth services, one approach is to link this container to the admin services
+# proxy container. To do this, determine whether the A or B instance is active, then run:
+#
 # For the A/B deployment of the Agave auth services, one approach is to link this container to the admin services
 # nginx container. To do this, first determine whether the A stack or B stack is deployed and then run:
 #
-# docker run --rm -it -e base_url=http://admin-proxy:80 \
-#            -v $(pwd)/admin_services.json:/api.json agaveapi/flask_admin_utils
+# for A stack:
+# docker run --rm --link a_adminnginx_1 -it -e base_url=http://a_adminnginx_1:80 \
+#            -v $(pwd)/admin_services.json:/api.json agaveplatform/admin-api-utils:develop
+#
+# for B stack:
+# docker run --rm --link b_adminnginx_1 -it -e base_url=http://b_adminnginx_1:80 \
+#            -v $(pwd)/admin_services.json:/api.json agaveplatform/admin-api-utils:develop
 
 import json
 import os
 import sys
+from json import JSONDecodeError
 
 import requests
 
-# override with env vars:
+# Override base url to admin proxy
 base_url = os.environ.get('base_url', 'http://172.17.0.1:8000')
 
 def headers():
@@ -32,17 +41,13 @@ def headers():
         headers = {'Authorization': 'Bearer {}'.format(token)}
     return headers
 
-def get_api_id():
-    api_definition_path = os.environ.get('api_file', '/api.json');
-    api_definition = json.load(open(api_definition_path))
+def get_api_id(api_definition):
     try:
         return '{}-admin-{}'.format(api_definition['name'], api_definition['version'])
     except KeyError:
         sys.exit("API json missing name or version.")
 
-def get_roles():
-    api_definition_path = os.environ.get('api_file', '/api.json');
-    api_definition = json.load(open(api_definition_path))
+def get_roles(api_definition):
     roles = api_definition.get('roles', [])
     if type(roles) == list:
         return roles
@@ -89,13 +94,12 @@ def api_registered(api_id):
     print("API {} already registered and published.".format(api_id))
     return True
 
-def register_api(api_id):
+def register_api(api_id, api_definition):
     print("Registering api {}.".format(api_id))
     url = '{}/{}'.format(base_url, '/admin/apis')
-    data = json.load(open('/api.json'))
     hs = headers()
     hs['Content-Type'] = 'application/json'
-    rsp = requests.post(url, data=json.dumps(data), headers=hs)
+    rsp = requests.post(url, data=json.dumps(api_definition), headers=hs)
     if not rsp.status_code in [200, 201, 204]:
         print("Error registering API {} -- bad status code: {}; response: {}".format(api_id, rsp.status_code, rsp))
         sys.exit()
@@ -113,15 +117,47 @@ def publish_api(api_id):
         sys.exit()
     print("API {} published.".format(api_id))
 
+def load_api_definitions():
+
+    # Override api definition file
+    api_definition_path = os.environ.get('api_definition_path', '/api.json');
+
+    try:
+        api_definitions = []
+
+        # if the api_definition_path is a directory, load every json file in the directory
+        if os.path.isdir(api_definition_path):
+            for api_path in os.listdir(api_definition_path):
+                if (api_path.endswith('.json')):
+                    api_definitions.append(json.load(open(api_path)))
+                else:
+                    print ("Skipping file {}".format(api_path))
+        # if the api_definition_path is a file, just load the file
+        else:
+            api_definitions.append(json.load(open(api_definition_path)))
+
+        return api_definitions
+
+    except OSError as err:
+        sys.exit("Error read API definition. {}".format(err.strerror))
+    except (JSONDecodeError, TypeError) as err:
+        print("Error read API definition. {}".format(err.strerror))
+        raise err
 
 def main():
-    roles = get_roles()
-    if roles:
-        register_roles(roles)
-    api_id = get_api_id()
-    if not api_registered(api_id):
-        register_api(api_id)
-        publish_api(api_id)
+    # load api definitions from disk
+    api_definitions = load_api_definitions()
+
+    # register every api loaded from disk
+    for api_definition in api_definitions:
+        roles = get_roles(api_definition)
+        if roles:
+            register_roles(roles)
+
+        api_id = get_api_id(api_definition)
+        if not api_registered(api_id):
+            register_api(api_id, api_definition)
+            publish_api(api_id)
 
 if __name__ == '__main__':
     main()
