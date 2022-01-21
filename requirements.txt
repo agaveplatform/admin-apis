@@ -1,4 +1,4 @@
-ipython==5.1.0
+ipython==7.16.3
 # agaveflask
 -e git+https://jstubbs@bitbucket.org/agaveapi/agaveflask.git#egg=agaveflask
 suds-jurko
